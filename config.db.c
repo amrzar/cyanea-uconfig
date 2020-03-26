@@ -403,8 +403,9 @@ static void update_select_token_list(_token_list_t head, bool n) {
 	token_list_for_each_entry(tp, head) { /* ... handle selects, if any. */
 		_extra_token_t e, etoken = token_list_entry_info(tp);
 		if ((item = hash_get_item(etoken->token.TK_STRING)) != NULL) {
+			_token_list_t tt = item_token_list(item);
 
-			e = item_config_token(item);
+			e = token_list_entry_info(tt);
 			if ((e->flags & TK_LIST_EF_CONFIG) &&
 				(e->token.ttype == TT_BOOL)) {
 
@@ -412,14 +413,17 @@ static void update_select_token_list(_token_list_t head, bool n) {
 					if(e->flags & TK_LIST_EF_DEFAULT ||
 						e->token.TK_BOOL == true)
 						item_inc(item);
-					else
+					else {
 						e->token.TK_BOOL = true;
+						update_select_token_list(tt->next, true);
+					}
 				} else {
-					if(e->token.TK_BOOL == true) {
-						if (item->refcount > 0)
-							item_dec(item);
-						else
-							e->token.TK_BOOL = false;					
+					if (item->refcount > 0)
+						item_dec(item);
+
+					else if (e->token.TK_BOOL == true) {
+						e->token.TK_BOOL = false;
+						update_select_token_list(tt->next, false);
 					}
 				}
 			}
