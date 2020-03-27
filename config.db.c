@@ -23,9 +23,6 @@
 
 static struct hlist_head symtable[SYMTABLE];
 
-const char *in_filename = "configs.in";
-const char *out_filename = "sys.config.h";
-
 menu_t mainmenu = { 
 	NULL,
 	NULL, /* ... always true. */

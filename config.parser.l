@@ -4,9 +4,10 @@
 #include "config.db.h"
 #include "y.tab.h"
 
-extern const char *in_filename;
-extern const char *out_filename;
 extern void yyerror(char *s);
+
+#define _IN_FILE "configs.in"
+#define _OUT_FILE "sys.config.h"
 
 %}
 
@@ -77,13 +78,23 @@ extern void yyerror(char *s);
 
 int yywrap(void) { return 1; }
 
+void print_help(char *pname) {
+	printf("\nUse: %s [OPTIONS]\n", pname);
+	printf("  [-C]      creates default '.old.config' from the input config file\n");
+	printf("  [-i file] choose input config file; uses '%s' in current directory as default\n", _IN_FILE);
+	printf("  [-o file] choose output autoconfig file; uses '%s' in current directory as default\n", _OUT_FILE);
+}
+
+const char *in_filename = _IN_FILE;
+const char *out_filename = _OUT_FILE;
+
 int main(int argc, char *argv[]) {
 	FILE *filep;
 	int option_index = 0;
 	int gen_old_config = 0;
 	int ret;
 
-	while ((option_index = getopt(argc, argv, "i:o:C")) != -1) {
+	while ((option_index = getopt(argc, argv, "i:o:Ch?")) != -1) {
 		switch (option_index) {
 			case 'i':
 				in_filename = optarg;
@@ -98,7 +109,10 @@ int main(int argc, char *argv[]) {
 				gen_old_config = 1;
 				break;
 
+			case 'h':
+			case '?':
 			default:
+				print_help(argv[0]);
       			return -1;
 		}
 	}
