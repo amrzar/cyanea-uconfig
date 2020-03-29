@@ -40,6 +40,7 @@ int yydebug = 1;
 %token CHOICE
 %token OPTION
 %token SELECT
+%token INCLUDE
 %token DEFAULT
 
 %token <token> TT_BOOL
@@ -70,8 +71,10 @@ int yydebug = 1;
 stmt_line: /* ... main entry to the grammer. */
 		  stmt_menu_start stmt_menu_end
 		| stmt_menu_start stmt_line stmt_menu_end
+		| stmt_include stmt_line
 		| stmt_config stmt_line
 		| stmt_choice stmt_line
+		| stmt_include
 		| stmt_config
 		| stmt_choice
 ;
@@ -229,6 +232,15 @@ stmt_choice: CHOICE TT_DESCRIPTION TT_SYMBOL
 		$3.ttype != TT_SYMBOL ||
 		add_new_choice_entry($2, $3,
 			$4, $5, $6) == -1)
+		YYERROR;
+};
+
+/* ... THE 'INCLUDE' SPECIFIC KEYWORD RULES. */
+
+stmt_include: INCLUDE TT_DESCRIPTION
+{
+	if ($2.ttype != TT_DESCRIPTION ||
+		add_new_config_file($2) == -1)
 		YYERROR;
 };
 

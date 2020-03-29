@@ -21,15 +21,18 @@
 #include "config.db.h"
 #include "y.tab.h"
 
-static struct hlist_head symtable[SYMTABLE];
-
 menu_t mainmenu = { 
 	NULL,
 	NULL, /* ... always true. */
 	LIST_HEAD_INIT(mainmenu.entries),
 	LIST_HEAD_INIT(mainmenu.childs),
-	LIST_HEAD_INIT(mainmenu.sibling) };
+	LIST_HEAD_INIT(mainmenu.sibling)
+};
+
 static menu_t *curr_menu = &mainmenu;
+
+_token_list_t config_files = NULL;
+static struct hlist_head symtable[SYMTABLE];
 
 void init_symbol_hash_table(void) {
 	for (int i = 0; i < SYMTABLE; i++)
@@ -185,6 +188,15 @@ int add_new_choice_entry(token_t token1, token_t token2,
 	}
 
 	return -1;
+}
+
+int add_new_config_file(token_t token1) {
+
+	if ((config_files = next_token(token1, config_files,
+		TK_LIST_EF_NULL)) == NULL)
+		return -1;
+
+	return SUCCESS;	
 }
 
 static _expr_t new_expr(enum expr_op op) {

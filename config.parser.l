@@ -24,6 +24,7 @@ extern void yyerror(char *s);
 "choice"		{ return CHOICE; }
 "option"		{ return OPTION; }
 "select"		{ return SELECT; }
+".include"		{ return INCLUDE; }
 "[default]"		{ return DEFAULT; }
 
 \(				{ return OPENPAREN; }
@@ -85,14 +86,33 @@ void print_help(char *pname) {
 	printf("  [-o file] choose output autoconfig file; uses '%s' in current directory as default\n", _OUT_FILE);
 }
 
-const char *in_filename = _IN_FILE;
-const char *out_filename = _OUT_FILE;
+/* ... default configuration and autoconfig files. */
+char *in_filename = _IN_FILE, *out_filename = _OUT_FILE;
+
+static inline int parse_file(const char *filename) {
+	FILE *filep;
+
+	printf("... config file: %s\n", filename);
+	if ((filep = fopen(filename, "r")) == NULL) {
+		perror("Unable to open config file");
+		return -1;
+	}	
+
+	yyset_in(filep);
+
+	int ret = 0;
+	if ((ret = yyparse()) != 0)
+		fprintf(stderr, "yacc failed with %d\n", ret);
+
+	fclose(filep);
+
+	return ret;
+}
 
 int main(int argc, char *argv[]) {
-	FILE *filep;
+	
 	int option_index = 0;
 	int gen_old_config = 0;
-	int ret;
 
 	while ((option_index = getopt(argc, argv, "i:o:Ch?")) != -1) {
 		switch (option_index) {
@@ -117,47 +137,56 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if ((filep = fopen(in_filename, "r")) == NULL) {
-		perror("Unable to open config file:");
-		return -1;
-	}
-
-	printf("... config file: %s\n", in_filename);
-	yyset_in(filep);
-
 	/* ... initialise symbol hash table. */
 	init_symbol_hash_table();
-	
-	if ((ret = yyparse()) != 0) {
-		fprintf(stderr, "yacc failed with %d\n", ret);
-		goto done;
+
+	/* ... main configuration file. */
+	if (parse_file(in_filename) != 0)
+		return -1;
+
+	_token_list_t tp;
+	while ((tp = config_files) != NULL) {
+		_extra_token_t etoken = token_list_entry_info(tp);
+		config_files = config_files->next; /* ... move next. */
+
+		in_filename = PROMPT(etoken->token.TK_STRING);
+		if (in_filename == NULL) {
+			fprintf(stderr, "invalid '.include' in configuration file: %s\n",
+				etoken->token.TK_STRING);
+			return -1;
+		}
+
+		if (parse_file(in_filename) != 0)
+			return -1;
+
+		free(in_filename);
+		free(etoken);
+		free(tp);
 	}
 
 	if (gen_old_config == 1) {
-		if ((ret = create_config_file(".old.config")) == -1) {
+		if (create_config_file(".old.config") == -1) {
 			perror("Generateing '.old.config'");
-			goto done;
+			return -1;
 		}
 
 		printf("Generateing '.old.config': Success\n");
 	} else {
-		if ((ret = read_config_file(".old.config")) == -1) {
+		if (read_config_file(".old.config") == -1) {
 			perror("Opening '.old.config'");
-			goto done;
+			return -1;
 		}
 
-		/* ... open up GUI. */
+		/* ... open up GUI: 25 pages. */
 		start_gui(25);
 
-		if ((ret = build_autoconfig(out_filename)) == -1) {
+		if (build_autoconfig(out_filename) == -1) {
 			perror("Building autoconfig:");
-			goto done;
+			return -1;
 		}
 
 		printf("Writing '%s': Success\n", out_filename);
 	}
 
-done:	
-	fclose(filep);
-	return ret;
+	return -1;
 }

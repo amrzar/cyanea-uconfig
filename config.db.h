@@ -32,6 +32,7 @@ typedef struct menu {
 
 /* ... parser output. */
 extern menu_t mainmenu;
+extern _token_list_t config_files;
 
 struct entry {
 	_string_t prompt;	/* ... entry's prompt string. */
@@ -45,7 +46,7 @@ struct entry {
 	size_t pp = strlen(_s);					\
 											\
 	int i;									\
-	for (i = 0; i < pp; i++)				\
+	for (i = 0; i < pp && pp > 2; i++)		\
 		if ((_s)[i] == '\n') break;			\
 	if (i == pp &&							\
 		(tmp = malloc(pp)) != NULL) {		\
@@ -124,6 +125,7 @@ extern int add_new_config_entry(token_t, token_t,
 	token_t, _token_list_t, _expr_t, token_t);
 extern int add_new_choice_entry(token_t, token_t,
 	_token_list_t, _expr_t, token_t);
+extern int add_new_config_file(token_t);
 extern int pop_menu(void);
 
 extern _expr_t expr_op_symbol_one(enum expr_op, token_t);
