@@ -357,6 +357,41 @@ bool eval_expr(_expr_t expr) {
 	return false;
 }
 
+void __fprintf_menu(FILE *fp, menu_t *menu) {
+	menu_t *m;
+	item_t *item;
+
+	if (eval_expr(menu->dependancy)) {
+		/* ...  handle childs, first. */
+		list_for_each_entry(m, &menu->childs, sibling)
+			__fprintf_menu(fp, m);
+
+		list_for_each_entry(item, &menu->entries, list) {
+			if (eval_expr(item->common.dependancy)) {
+				fprintf(fp, "#define %s ", item->common.symbol);
+
+				_token_list_t tp;
+				token_list_for_each_entry(tp, item_token_list(item)) {
+					_extra_token_t etoken = token_list_entry_info(tp);
+					
+					if (etoken->flags & 
+						(TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
+						if (etoken->token.ttype == TT_BOOL)
+						 	fprintf(fp, "%s\n",
+						 		etoken->token.TK_BOOL ? "1" : "0");
+
+					 	else if (etoken->token.ttype == TT_INTEGER)
+					 		fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
+
+					 	else if (etoken->token.ttype  == TT_DESCRIPTION)
+					 		fprintf(fp, "%s\n", etoken->token.TK_STRING);
+					}
+				}
+			}
+		}
+	}
+}
+
 int __populate_config_file(const char *filename, int flags) {
 	item_t *item;
 	_token_list_t tp;
@@ -376,6 +411,8 @@ int __populate_config_file(const char *filename, int flags) {
 
 	fprintf(fp, "# THIS IS AN AUTO-GENERATED FILE: DO NOT EDIT.\n");
 	for (int i = 0; i < SYMTABLE; i++) {
+
+		/* ... dump every items to be able to restore. */
 		hlist_for_each_entry(item, &symtable[i], hnode) {
 			fprintf(fp, "%s ", item->common.symbol);
 
@@ -552,46 +589,6 @@ int read_config_file(const char *filename) {
 	fclose(fp);
 	if (symbol != NULL)
 		free(symbol);
-
-	return SUCCESS;
-}
-
-int build_autoconfig(const char *filename) {
-	item_t *item;
-	_token_list_t tp;
-	FILE *fp;
-
-	if ((fp = fopen(filename, "w+")) == NULL)
-		return -1;
-
-	for (int i = 0; i < SYMTABLE; i++) {
-		hlist_for_each_entry(item, &symtable[i], hnode) {
-			if (eval_expr(item->common.dependancy)) {
-
-				fprintf(fp, "#define %s ", item->common.symbol);
-
-				token_list_for_each_entry(tp, item_token_list(item)) {
-					_extra_token_t etoken = token_list_entry_info(tp);
-					
-					if (etoken->flags & 
-						(TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
-						if (etoken->token.ttype == TT_BOOL)
-						 	fprintf(fp, "%s\n",
-						 		etoken->token.TK_BOOL ? "1" : "0");
-
-					 	else if (etoken->token.ttype == TT_INTEGER)
-					 		fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
-
-					 	else if (etoken->token.ttype  == TT_DESCRIPTION)
-					 		fprintf(fp, "%s\n", etoken->token.TK_STRING);
-					}
-				}
-
-			}
-		}
-	}
-
-	fclose(fp);
 
 	return SUCCESS;
 }

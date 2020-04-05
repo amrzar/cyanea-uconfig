@@ -118,7 +118,18 @@ static inline int write_config_file(const char *filename) {
 }
 
 extern int read_config_file(const char *);
-extern int build_autoconfig(const char *);
+extern void __fprintf_menu(FILE *, menu_t *);
+
+static inline int build_autoconfig(const char *filename) {
+	FILE *fp;
+
+	if ((fp = fopen(filename, "w+")) == NULL)
+		return -1;
+	__fprintf_menu(fp, &mainmenu);
+	fclose(fp);
+
+	return SUCCESS;
+}
 
 extern int push_menu(token_t, _expr_t);
 extern int add_new_config_entry(token_t, token_t,
