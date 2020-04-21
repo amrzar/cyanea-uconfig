@@ -41,25 +41,36 @@ struct entry {
  	_string_t help;		/* ... help statements. */
  };
 
-#define PROMPT(_s) ({						\
-	_string_t tmp = NULL;					\
-	size_t pp = strlen(_s);					\
-											\
-	int i;									\
-	for (i = 0; i < pp && pp > 2; i++)		\
-		if ((_s)[i] == '\n') break;			\
-	if (i == pp &&							\
-		(tmp = malloc(pp)) != NULL) {		\
-		sscanf((_s), "\"%[^\"]\"", tmp);	\
-		free(_s);							\
-	}										\
-	tmp;									\
-})
+static inline _string_t dupprompt(_string_t s) {
+	size_t pp;
+	_string_t tmp = NULL;
+
+	if ((pp = strlen(s)) > 2) {
+		/* ... not an empty quotation. */
+
+		int i;
+		for (i = 0; i < pp &&
+			s[i] != '\n'; i++); /* ... check for '\n'. */
+		if (i == pp && (tmp = malloc(pp)) != NULL) {
+			sscanf(s, "\"%[^\"]\"", tmp);
+			free(s);
+		}
+	}
+
+	return tmp;
+}
 
 static inline int __init_entry(struct entry *entry,
 	token_t prompt,	token_t symbol, token_t help, _expr_t expr) {
-	if ((entry->prompt = PROMPT(prompt.TK_STRING)) == NULL)
-		return -1;
+
+	if (prompt.TK_STRING != NULL) {
+
+		/* ... prompt is not a 'NULLDESC'. */ 
+		entry->prompt = dupprompt(prompt.TK_STRING);
+		if (entry->prompt == NULL)
+			return -1;
+	} else
+		entry->prompt = NULL;
 
 	entry->symbol = symbol.TK_STRING;
 	entry->dependancy = expr;
