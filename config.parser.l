@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 		_extra_token_t etoken = token_list_entry_info(tp);
 		config_files = config_files->next; /* ... move next. */
 
-		in_filename = PROMPT(etoken->token.TK_STRING);
+		in_filename = dupprompt(etoken->token.TK_STRING);
 		if (in_filename == NULL) {
 			fprintf(stderr, "invalid '.include' in configuration file: %s\n",
 				etoken->token.TK_STRING);

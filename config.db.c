@@ -89,7 +89,10 @@ int push_menu(token_t token, _expr_t expr) {
 	menu_t *menu;
 
 	if ((menu = malloc(sizeof(menu_t))) != NULL) {
-		menu->prompt = PROMPT(token.TK_STRING);
+		menu->prompt = dupprompt(token.TK_STRING);
+		if (menu->prompt == NULL)
+			return -1;
+
 		menu->dependancy = expr;
 		init_list_head(&menu->entries);
 		init_list_head(&menu->childs);
