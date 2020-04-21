@@ -275,10 +275,11 @@ static config_t *__construct_page(menu_t *menu) {
 	list_for_each_entry(item, &menu->entries, list) {
 		_extra_token_t etoken;
 
-		if (eval_expr(item->common.dependancy)) {
+		if (item->common.prompt != NULL &&
+			eval_expr(item->common.dependancy)) {
 
 			/* ... never is NULL. */
-			etoken = token_list_entry_info(item_token_list(item));
+			etoken = item_config_token(item);
 
 			index++;
 			if ((tmp = realloc(conf,
