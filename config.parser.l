@@ -182,8 +182,15 @@ int main(int argc, char *argv[]) {
 		}
 
 		/* ... open up GUI: 25 pages. */
-		if (need_gui == 1)
-			start_gui(25);
+		if (need_gui == 1) {
+			if (start_gui(25) == 0) {
+				if (write_config_file(".old.config") == -1) {
+					perror("Writing '.old.config'");
+					return -1;
+				}
+			}
+			else return 0;
+		}
 
 		if (build_autoconfig(out_filename) == -1) {
 			perror("Building autoconfig:");
