@@ -429,7 +429,7 @@ int start_gui(int nr_pages) {
 					} else { /* and TT_DESCRIPTION. */
 						in = open_input_box(VISIBLE_MAIN_MENU_HIGH, SCREEN_WIDTH,
 							TITLE_HIGH, MARGIN_LEFT, "", item->common.prompt,
-							etoken->token.TK_STRING, "\".*\""); /* ... regex: description. */
+							etoken->token.TK_STRING, "^\"[^\"]*\" *$"); /* ... regex: description. */
 					
 						if (in != NULL)
 							toggle_config(item, in);
