@@ -13,6 +13,7 @@
  *
  */
 
+#include <ctype.h>
 #include <ncurses.h>
 #include <form.h>
 #include <menu.h>
@@ -209,8 +210,12 @@ _string_t open_input_box(int height, int width,
 			if (form_driver(form, REQ_VALIDATION) != E_OK)
 				continue;
 
-			/* ... return a null-terminated string. */
-			ret = strdup(field_buffer(textbox, 0));
+			_string_t tmp = field_buffer(textbox, 0);
+
+			int n = strlen(tmp);
+			/* ... trimed and null-terminated string. */
+			while(n > 2 && isspace(tmp[n - 1])) n--;
+			ret = strndup(tmp, n);
 			break;
 		}
 
