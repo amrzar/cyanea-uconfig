@@ -13,12 +13,7 @@
  # GNU General Public License for more details.
  #
 
-Q := @
-CC := gcc
-
 DEPS := $(wildcard *.d)
-
-all: config.ncurses
 
 -include $(DEPS)
 
@@ -32,22 +27,24 @@ lex.yy.c: config.parser.l
 
 config.ncurses: y.tab.o lex.yy.o config.db.o ncurses.utils.o ncurses.gui.o
 	$(Q)echo "LD $@"
-	$(Q)$(CC) $^ -lncurses -lmenu -lform -o $@
+	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -o $@
 
 %.o: %.c
 	$(Q)echo "CC $<"
-	$(Q)$(CC) $(CFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
+	$(Q)$(HOSTCC) $(HOSTCFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
 
 menuconfig: config.ncurses
-	$(Q)./config.ncurses
+	$(Q)./config.ncurses -i $(I) -o $(OUT) -u
+
+config: config.ncurses
+	$(Q)./config.ncurses -i $(I) -o $(OUT)
 
 oldconfig: config.ncurses
-	$(Q)rm .old.config > /dev/null 2>&1 || true
-	$(Q)./config.ncurses -C
+	$(Q)rm -f .old.config
+	$(Q)./config.ncurses -C -i $(I)
 
 clean:
-	$(Q)echo "[CLEAN]"
-	$(Q)rm lex.yy.c y.tab.c y.output y.tab.h $(wildcard *.o) \
-	config.ncurses $(DEPS) > /dev/null 2>&1 || true
+	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
+	$(wildcard *.o) config.ncurses $(DEPS)
 
-.PHONY: all clean
+.PHONY: menuconfig config oldconfig clean
