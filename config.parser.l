@@ -82,6 +82,7 @@ int yywrap(void) { return 1; }
 void print_help(char *pname) {
 	printf("\nUse: %s [OPTIONS]\n", pname);
 	printf("  [-C]      creates default '.old.config' from the input config file\n");
+	printf("  [-u]      open the GUI\n");
 	printf("  [-i file] choose input config file; uses '%s' in current directory as default\n", _IN_FILE);
 	printf("  [-o file] choose output autoconfig file; uses '%s' in current directory as default\n", _OUT_FILE);
 }
@@ -112,9 +113,9 @@ static inline int parse_file(const char *filename) {
 int main(int argc, char *argv[]) {
 	
 	int option_index = 0;
-	int gen_old_config = 0;
+	int gen_old_config = 0, need_gui = 0;
 
-	while ((option_index = getopt(argc, argv, "i:o:Ch?")) != -1) {
+	while ((option_index = getopt(argc, argv, "i:o:Ch?u")) != -1) {
 		switch (option_index) {
 			case 'i':
 				in_filename = optarg;
@@ -122,11 +123,14 @@ int main(int argc, char *argv[]) {
 
 			case 'o':
 				out_filename = optarg;
-				printf("Writing to %s\n", out_filename);
 				break;
 
 			case 'C':
 				gen_old_config = 1;
+				break;
+
+			case 'u':
+				need_gui = 1;
 				break;
 
 			case 'h':
@@ -178,15 +182,16 @@ int main(int argc, char *argv[]) {
 		}
 
 		/* ... open up GUI: 25 pages. */
-		start_gui(25);
+		if (need_gui == 1)
+			start_gui(25);
 
 		if (build_autoconfig(out_filename) == -1) {
 			perror("Building autoconfig:");
 			return -1;
 		}
 
-		printf("Writing '%s': Success\n", out_filename);
+		printf("Writing %s: Success\n", out_filename);
 	}
 
-	return -1;
+	return 0;
 }
