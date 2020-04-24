@@ -28,8 +28,8 @@ static const char *FOOTNOTE[] = {
 	};
 
 static const char exit_message[] = {
-	"Make sure to save changes before exit.\n" \
-	"All chages are saved in '.config' file."
+	"All changes are written to '.old.config' and system configuration header is generated.\n" \
+	"... to ignore all changes choose exit."
 	};
 
 static const char *exit_message_buttons[] = {
@@ -376,14 +376,15 @@ int start_gui(int nr_pages) {
 
 			case SPECIAL_KEY_Q:
 				while(1) {
-					int d = open_message_box(2, 60, LINES / 2,
-						COLS / 2 - 30, exit_message, exit_message_buttons);
+					int d = open_message_box(2, 90, LINES / 2,
+						COLS / 2 - 45, exit_message, exit_message_buttons);
 					
-					if (d == 'x')
+					if (d == 'x') {
+						ret = -1;
 						goto end_gui;
+					}
 
 					else if (d == 'S' || d == 's') {
-						ret = write_config_file(".old.config");
 						goto end_gui;
 
 					} else if (d == 'C' || d == 'c')
