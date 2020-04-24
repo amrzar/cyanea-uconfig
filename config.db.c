@@ -42,7 +42,7 @@ void init_symbol_hash_table(void) {
 static unsigned long hash_symbol(_string_t symbol) {
 	int c;
 	unsigned long hash = 5381;
-	while (c = *symbol++)
+	while ((c = *symbol++) != '\0')
 		hash = ((hash << 5) + hash) + c;
 	return hash % SYMTABLE;
 }

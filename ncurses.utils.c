@@ -147,7 +147,7 @@ _string_t open_input_box(int height, int width,
 
 	FORM *form;
 	FIELD *fields[3] = { NULL };
-	WINDOW *wpopup, *wmessage, *wform;
+	WINDOW *wpopup, *wmessage, *wform = NULL;
 	int getch_key;
 
 	_string_t ret = NULL;
@@ -257,7 +257,7 @@ int open_radio_box(int height, int width, int y, int x,
 
 	MENU *menu;
 	ITEM **items;
-	WINDOW *wpopup, *wmessage, *winput;
+	WINDOW *wpopup, *wmessage, *winput = NULL;
 	int getch_key, i;
 
 	int ret = -1;
