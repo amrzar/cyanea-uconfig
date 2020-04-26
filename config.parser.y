@@ -69,14 +69,10 @@ int yydebug = 1;
 %%
 
 stmt_line: /* ... main entry to the grammer. */
-		  stmt_menu_start stmt_menu_end
-		| stmt_menu_start stmt_line stmt_menu_end
+		| stmt_menu_start stmt_line stmt_menu_end stmt_line
 		| stmt_include stmt_line
 		| stmt_config stmt_line
 		| stmt_choice stmt_line
-		| stmt_include
-		| stmt_config
-		| stmt_choice
 ;
 
 stmt_menu_start: MENU TT_DESCRIPTION stmt_dependency
