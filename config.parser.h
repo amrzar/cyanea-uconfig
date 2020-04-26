@@ -53,20 +53,19 @@ enum expr_op {
 
 struct expr {
 	enum expr_op op;
-	union {
-		union {
-			union __e {
-				token_t token;
-				struct expr *expr;
-			} up;
-			union __e mid;
-		}; /* ... use anonymous union. */
+	struct {
+		union __e {
+			token_t token;
+			struct expr *expr;
+		} up;
 		union __e down;
 	} node;	
 };
 
 #define LEFT node.up
-#define NODE node.mid
+
+/* ... use 'LEFT' for a node. */
+#define NODE LEFT
 #define RIGHT node.down
 
 /* ... entry's dependancy tree. */
