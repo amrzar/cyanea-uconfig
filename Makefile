@@ -36,15 +36,15 @@ config.ncurses: y.tab.o lex.yy.o config.db.o ncurses.utils.o ncurses.gui.o
 menuconfig: config.ncurses
 	$(Q)./config.ncurses -i $(I) -o $(OUT) -u
 
-config: config.ncurses
+silentoldconfig: config.ncurses
 	$(Q)./config.ncurses -i $(I) -o $(OUT)
 
-oldconfig: config.ncurses
+defconfig: config.ncurses
 	$(Q)rm -f .old.config
 	$(Q)./config.ncurses -C -i $(I)
 
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
-	$(wildcard *.o) config.ncurses $(DEPS)
+		$(wildcard *.o) config.ncurses $(DEPS)
 
-.PHONY: menuconfig config oldconfig clean
+.PHONY: menuconfig silentoldconfig defconfig clean
