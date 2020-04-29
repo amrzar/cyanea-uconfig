@@ -371,7 +371,6 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
 
 		list_for_each_entry(item, &menu->entries, list) {
 			if (eval_expr(item->common.dependancy)) {
-				fprintf(fp, "#define %s ", item->common.symbol);
 
 				_token_list_t tp;
 				token_list_for_each_entry(tp, item_token_list(item)) {
@@ -379,15 +378,18 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
 					
 					if (etoken->flags & 
 						(TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
-						if (etoken->token.ttype == TT_BOOL)
-						 	fprintf(fp, "%s\n",
-						 		etoken->token.TK_BOOL ? "1" : "0");
+						if (etoken->token.ttype == TT_BOOL) {
+							/* ... assume 'false' as undefined symbol. */
+							if (etoken->token.TK_BOOL == true)
+								fprintf(fp, "#define %s 1\n", item->common.symbol);
 
-					 	else if (etoken->token.ttype == TT_INTEGER)
-					 		fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
+					 	 } else if (etoken->token.ttype == TT_INTEGER)
+					 		fprintf(fp, "#define %s %d\n", item->common.symbol,
+					 			etoken->token.TK_INTEGER);
 
 					 	else if (etoken->token.ttype  == TT_DESCRIPTION)
-					 		fprintf(fp, "%s\n", etoken->token.TK_STRING);
+					 		fprintf(fp, "#define %s %s\n", item->common.symbol,
+					 			etoken->token.TK_STRING);
 					}
 				}
 			}
