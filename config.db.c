@@ -115,19 +115,25 @@ int pop_menu(void) {
 	return SUCCESS;
 }
 
-_token_list_t next_token(token_t token1,
-	_token_list_t token2, int flags) {
-
+_token_list_t next_token(_token_list_t token1, int flags, ...) {
+	va_list valist;
 	_extra_token_t etoken;
+
+	va_start(valist, flags);
+
 	if ((etoken = malloc(ETOKEN_SIZE)) != NULL) {
 		etoken->flags = flags;
-		etoken->token = token1;
+		if (flags == TK_LIST_EF_NULL ||
+			flags & TK_LIST_EF_DEFAULT)
+			etoken->token = va_arg(valist, token_t);
 
 		/* ... if '__token_list_add' returns NULL, we assume
 		 * syntax error and refuses to call free on 'etoken'. */
-		return __token_list_add(etoken, token2);
+		return __token_list_add(etoken, token1);
 	}
-	
+
+	va_end(valist);
+
 	return NULL;
 }
 
@@ -149,8 +155,8 @@ int add_new_config_entry(token_t token1, token_t token2,
 			return -1;
 
 		/* ... store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
-		if ((item->__list = next_token(token3, token4,
-				TK_LIST_EF_DEFAULT | TK_LIST_EF_CONFIG)) == NULL) 
+		if ((item->__list = next_token(token4,
+				TK_LIST_EF_DEFAULT | TK_LIST_EF_CONFIG, token3)) == NULL) 
 			return -1; /* ... assume syntax error. */
 
 		item->refcount = 0;
@@ -195,8 +201,8 @@ int add_new_choice_entry(token_t token1, token_t token2,
 
 int add_new_config_file(token_t token1) {
 
-	if ((config_files = next_token(token1, config_files,
-		TK_LIST_EF_NULL)) == NULL)
+	if ((config_files = next_token(config_files,
+		TK_LIST_EF_NULL, token1)) == NULL)
 		return -1;
 
 	return SUCCESS;	

@@ -93,7 +93,7 @@ typedef struct extra_token * _extra_token_t;
 #define ETOKEN_SIZE sizeof(struct extra_token)
 
 /* ... 'next_token' is called for every item's token. */
-extern _token_list_t next_token(token_t, _token_list_t, int);
+extern _token_list_t next_token(_token_list_t, int, ...);
 
 typedef struct item {
 	struct entry common;
