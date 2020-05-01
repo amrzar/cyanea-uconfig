@@ -432,18 +432,20 @@ int __populate_config_file(const char *filename, int flags) {
 				
 				if (etoken->flags & flags) {
 					if (etoken->token.ttype == TT_BOOL)
-					 	fprintf(fp, "%s\n",
-					 		etoken->token.TK_BOOL ? "true" : "false");
+						fprintf(fp, "%s\n",
+							etoken->token.TK_BOOL ? "true" : "false");
 
-				 	else if (etoken->token.ttype == TT_INTEGER)
-				 		fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
+					else if (etoken->token.ttype == TT_INTEGER)
+						fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
 
-				 	else if (etoken->token.ttype  == TT_DESCRIPTION)
-				 		fprintf(fp, "%s\n", etoken->token.TK_STRING);
+					else if (etoken->token.ttype  == TT_DESCRIPTION)
+						fprintf(fp, "%s\n", etoken->token.TK_STRING);
 
-				 	else
-				 		/* ... only when 'flag' is -1. */
-				 		fprintf(fp, "undefined.\n");
+					else
+						/* ... only when 'flag' is -1. */
+						fprintf(fp, "undefined.\n");
+
+					break;
 				}
 			}
 		}

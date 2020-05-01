@@ -22,6 +22,7 @@ int yydebug = 1;
 
 %union 
 {
+	unsigned long flags;
 	token_t token;
 	_token_list_t tokenlist;
 	_expr_t exprtree;
@@ -52,8 +53,8 @@ int yydebug = 1;
 %type <token> stmt_help exprin
 %type <exprtree> stmt_expression stmt_dependency
 
-%type <tokenlist> choice_int_def choice_int_ndef
-%type <tokenlist> choice_str_def choice_str_ndef
+%type <flags> choice_default
+%type <tokenlist> choice_int_def choice_str_def
 %type <tokenlist> stmt_choice_options
 
 %type <tokenlist> stmt_config_selects 
@@ -178,48 +179,33 @@ stmt_config: CONFIG stmt_config_description TT_SYMBOL
 
 /* ... THE 'CHOICE' SPECIFIC KEYWORD RULES. */
 
-choice_int_ndef: 
-		 /* optional: empty. */ 					{ $$ = NULL; 	}
-		| OPTION TT_INTEGER choice_int_ndef
-{
-	$$ = YYTEST(next_token($3,
-		TK_LIST_EF_NULL, $2));
-};
+choice_default:
+		  /* optional: empty */			{ $$ = TK_LIST_EF_NULL; 	}
+		| DEFAULT						{ $$ = TK_LIST_EF_DEFAULT; 	}
 
 choice_int_def:
-		  OPTION TT_INTEGER choice_int_def 
+		  /* optional: empty */						{ $$ = NULL; 	}
+		| OPTION TT_INTEGER choice_default choice_int_def 
 {
-	$$ = YYTEST(next_token($3,
-		TK_LIST_EF_NULL, $2));
-}
-		| OPTION TT_INTEGER DEFAULT choice_int_ndef 
-{
-	$$ = YYTEST(next_token($4,
-		TK_LIST_EF_DEFAULT, $2));
-};
-
-choice_str_ndef:
-		 /* optional: empty. */ 					{ $$ = NULL; 	}
-		| OPTION TT_DESCRIPTION choice_str_ndef 
-{
-	$$ = YYTEST(next_token($3,
-		TK_LIST_EF_NULL, $2));
+	$$ = YYTEST(next_token($4, $3, $2));
 };
 
 choice_str_def: 
-		  OPTION TT_DESCRIPTION choice_str_def
+		  /* optional: empty */						{ $$ = NULL; 	}
+		| OPTION TT_DESCRIPTION choice_default choice_str_def
 {
-	$$ = YYTEST(next_token($3,
-		TK_LIST_EF_NULL, $2));
-}
-		| OPTION TT_DESCRIPTION DEFAULT choice_str_ndef
-{
-	$$ = YYTEST(next_token($4,
-		TK_LIST_EF_DEFAULT, $2));
+	$$ = YYTEST(next_token($4, $3, $2));
 };
 
 stmt_choice_options: /* ... options should have same type. */
-		  choice_int_def | choice_str_def;
+		  OPTION TT_INTEGER choice_default choice_int_def
+{
+	$$ = YYTEST(next_token($4, $3, $2));
+};
+		| OPTION TT_DESCRIPTION choice_default choice_str_def
+{
+	$$ = YYTEST(next_token($4, $3, $2));
+};
 
 stmt_choice: CHOICE TT_DESCRIPTION TT_SYMBOL
 		stmt_choice_options stmt_dependency stmt_help
