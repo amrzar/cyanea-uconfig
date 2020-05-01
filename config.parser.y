@@ -144,7 +144,7 @@ stmt_config_description:
 stmt_config_selects:
 		  /* optional: empty. */ 					{ $$ = NULL; 	}
 		| SELECT TT_SYMBOL stmt_config_selects
-			{ $$ = YYTEST(next_token($2, $3, TK_LIST_EF_NULL)); 	}
+			{ $$ = YYTEST(next_token($3, TK_LIST_EF_NULL, $2)); 	}
 ;
 
 stmt_config_type:
@@ -182,40 +182,40 @@ choice_int_ndef:
 		 /* optional: empty. */ 					{ $$ = NULL; 	}
 		| OPTION TT_INTEGER choice_int_ndef
 {
-	$$ = YYTEST(next_token($2, $3,
-		TK_LIST_EF_NULL));
+	$$ = YYTEST(next_token($3,
+		TK_LIST_EF_NULL, $2));
 };
 
 choice_int_def:
 		  OPTION TT_INTEGER choice_int_def 
 {
-	$$ = YYTEST(next_token($2, $3,
-		TK_LIST_EF_NULL));
+	$$ = YYTEST(next_token($3,
+		TK_LIST_EF_NULL, $2));
 }
 		| OPTION TT_INTEGER DEFAULT choice_int_ndef 
 {
-	$$ = YYTEST(next_token($2, $4,
-		TK_LIST_EF_DEFAULT));
+	$$ = YYTEST(next_token($4,
+		TK_LIST_EF_DEFAULT, $2));
 };
 
 choice_str_ndef:
 		 /* optional: empty. */ 					{ $$ = NULL; 	}
 		| OPTION TT_DESCRIPTION choice_str_ndef 
 {
-	$$ = YYTEST(next_token($2, $3,
-		TK_LIST_EF_NULL));
+	$$ = YYTEST(next_token($3,
+		TK_LIST_EF_NULL, $2));
 };
 
 choice_str_def: 
 		  OPTION TT_DESCRIPTION choice_str_def
 {
-	$$ = YYTEST(next_token($2, $3,
-		TK_LIST_EF_NULL));
+	$$ = YYTEST(next_token($3,
+		TK_LIST_EF_NULL, $2));
 }
 		| OPTION TT_DESCRIPTION DEFAULT choice_str_ndef
 {
-	$$ = YYTEST(next_token($2, $4,
-		TK_LIST_EF_DEFAULT));
+	$$ = YYTEST(next_token($4,
+		TK_LIST_EF_DEFAULT, $2));
 };
 
 stmt_choice_options: /* ... options should have same type. */
