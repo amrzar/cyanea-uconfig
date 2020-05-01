@@ -74,7 +74,7 @@ static token_t hash_get_token(_string_t symbol) {
 
 	if ((item = hash_get_item(symbol)) != NULL) {
 		token_list_for_each_entry(tp, item_token_list(item)) {
-			_extra_token_t etoken = token_list_entry_info(tp);
+			_extended_token_t etoken = token_list_entry_info(tp);
 
 			if (etoken->flags & /* ... config or selected token. */
 				(TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED))
@@ -115,9 +115,9 @@ int pop_menu(void) {
 	return SUCCESS;
 }
 
-_token_list_t next_token(_token_list_t token1, int flags, ...) {
+_token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
 	va_list valist;
-	_extra_token_t etoken;
+	_extended_token_t etoken;
 
 	va_start(valist, flags);
 
@@ -294,7 +294,7 @@ static bool __eval_expr(token_t token1,
 
 bool eval_expr(_expr_t expr) {
 	item_t *item;
-	_extra_token_t etoken;
+	_extended_token_t etoken;
 	token_t token1, token2;
 
 	/* ... no 'depends' keyword. */
@@ -380,7 +380,7 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
 
 				_token_list_t tp;
 				token_list_for_each_entry(tp, item_token_list(item)) {
-					_extra_token_t etoken = token_list_entry_info(tp);
+					_extended_token_t etoken = token_list_entry_info(tp);
 					
 					if (etoken->flags & 
 						(TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
@@ -403,7 +403,7 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
 	}
 }
 
-int __populate_config_file(const char *filename, int flags) {
+int __populate_config_file(const char *filename, unsigned long flags) {
 	item_t *item;
 	_token_list_t tp;
 	FILE *fp;
@@ -428,7 +428,7 @@ int __populate_config_file(const char *filename, int flags) {
 			fprintf(fp, "%s ", item->common.symbol);
 
 			token_list_for_each_entry(tp, item_token_list(item)) {
-				_extra_token_t etoken = token_list_entry_info(tp);
+				_extended_token_t etoken = token_list_entry_info(tp);
 				
 				if (etoken->flags & flags) {
 					if (etoken->token.ttype == TT_BOOL)
@@ -460,7 +460,7 @@ static void update_select_token_list(_token_list_t head, bool n) {
 	_token_list_t tp;
 
 	token_list_for_each_entry(tp, head) { /* ... handle selects, if any. */
-		_extra_token_t e, etoken = token_list_entry_info(tp);
+		_extended_token_t e, etoken = token_list_entry_info(tp);
 		if ((item = hash_get_item(etoken->token.TK_STRING)) != NULL) {
 			_token_list_t tt = item_token_list(item);
 
@@ -494,7 +494,7 @@ static void update_select_token_list(_token_list_t head, bool n) {
 
 }
 
-void __toggle_choice(_extra_token_t etoken, _string_t n) {
+void __toggle_choice(_extended_token_t etoken, _string_t n) {
 	if ((etoken->token.ttype == TT_INTEGER && 
 		etoken->token.TK_INTEGER == atoi(n)) ||
 		(etoken->token.ttype == TT_DESCRIPTION &&
@@ -506,7 +506,7 @@ void __toggle_choice(_extra_token_t etoken, _string_t n) {
 
 void toggle_config(item_t *item, ...) {
 	va_list valist;
-	_extra_token_t etoken;
+	_extended_token_t etoken;
 
 	va_start(valist, item);
 	_token_list_t tp = item_token_list(item);
@@ -555,7 +555,7 @@ int read_config_file(const char *filename) {
 
 		if ((item = hash_get_item(symbol)) != NULL) {
 			token_list_for_each_entry(tp, item_token_list(item)) {
-				_extra_token_t etoken = token_list_entry_info(tp);
+				_extended_token_t etoken = token_list_entry_info(tp);
 
 				if (etoken->flags & TK_LIST_EF_CONFIG) {
 					if (etoken->token.ttype == TT_BOOL) {

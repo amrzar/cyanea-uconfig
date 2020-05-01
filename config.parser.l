@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 
 	_token_list_t tp;
 	while ((tp = config_files) != NULL) {
-		_extra_token_t etoken = token_list_entry_info(tp);
+		_extended_token_t etoken = token_list_entry_info(tp);
 		config_files = config_files->next; /* ... move next. */
 
 		in_filename = dupprompt(etoken->token.TK_STRING);
