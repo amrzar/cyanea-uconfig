@@ -84,16 +84,16 @@ static inline int __init_entry(struct entry *entry,
 #define TK_LIST_EF_CONFIG 2
 #define TK_LIST_EF_SELECTED 4
 
-struct extra_token {
+struct extended_token {
 	unsigned long flags;
 	token_t token;
 };
 
-typedef struct extra_token * _extra_token_t;
-#define ETOKEN_SIZE sizeof(struct extra_token)
+typedef struct extended_token * _extended_token_t;
+#define ETOKEN_SIZE sizeof(struct extended_token)
 
 /* ... 'next_token' is called for every item's token. */
-extern _token_list_t next_token(_token_list_t, int, ...);
+extern _token_list_t next_token(_token_list_t, unsigned long, ...);
 
 typedef struct item {
 	struct entry common;
@@ -115,7 +115,7 @@ typedef struct item {
 
 #define SYMTABLE 256
 extern void init_symbol_hash_table(void);
-extern int __populate_config_file(const char *, int);
+extern int __populate_config_file(const char *, unsigned long);
 
 static inline int create_config_file(const char *filename) {
 	return __populate_config_file(filename,
@@ -156,12 +156,12 @@ extern _expr_t expr_op_expr_one(enum expr_op, _expr_t);
 extern _expr_t expr_op_expr_two(enum expr_op, _expr_t, _expr_t);
 extern bool eval_expr(_expr_t);
 
-extern void __toggle_choice(_extra_token_t, _string_t);
+extern void __toggle_choice(_extended_token_t, _string_t);
 static inline void toggle_choice(item_t *item, _string_t n) {
 	_token_list_t tp;
 
 	token_list_for_each_entry(tp, item->__list) {
-		_extra_token_t etoken = token_list_entry_info(tp);
+		_extended_token_t etoken = token_list_entry_info(tp);
 
 		/* ... remove 'TK_LIST_EF_SELECTED', first. */
 		etoken->flags &= ~TK_LIST_EF_SELECTED;
