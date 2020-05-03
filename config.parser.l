@@ -1,5 +1,8 @@
 %{
 
+#include <unistd.h>
+#include <libgen.h>
+
 #include "config.parser.h"
 #include "config.db.h"
 #include "y.tab.h"
@@ -111,7 +114,7 @@ static inline int parse_file(const char *filename) {
 }
 
 int main(int argc, char *argv[]) {
-	
+
 	int option_index = 0;
 	int gen_old_config = 0, need_gui = 0;
 
@@ -147,6 +150,11 @@ int main(int argc, char *argv[]) {
 	/* ... main configuration file. */
 	if (parse_file(in_filename) != 0)
 		return -1;
+
+	if (chdir(dirname(in_filename)) == -1) {
+		perror("Changing cwd");
+		return -1;
+	}
 
 	_token_list_t tp;
 	while ((tp = config_files) != NULL) {

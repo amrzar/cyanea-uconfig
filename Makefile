@@ -40,7 +40,7 @@ silentoldconfig: config.ncurses
 	$(Q)./config.ncurses -i $(I) -o $(OUT)
 
 defconfig: config.ncurses
-	$(Q)rm -f .old.config
+	$(Q)rm -f $(dir $(I)).old.config
 	$(Q)./config.ncurses -C -i $(I)
 
 clean:
