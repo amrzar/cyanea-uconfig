@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef __LLIST_H__
-#define __LLIST_H__
+#ifndef __CONFIG_UTILS_H__
+#define __CONFIG_UTILS_H__
 
 #include <stdlib.h>
 
@@ -104,4 +104,4 @@ static inline int hlist_empty(struct hlist_head * head) {
 	return head->first == NULL;
 }
 
-#endif /* __LLIST_H__ */
+#endif /* __CONFIG_UTILS_H__ */
