@@ -13,7 +13,8 @@
  # GNU General Public License for more details.
  #
 
-DEPS := $(wildcard *.d)
+DEPS = $(wildcard *.d)
+SOURCES = config.db.c config.main.c ncurses.utils.c ncurses.gui.c
 
 -include $(DEPS)
 
@@ -25,7 +26,7 @@ lex.yy.c: config.parser.l
 	$(Q)echo "LX $@"
 	$(Q)lex $<
 
-config.ncurses: y.tab.o lex.yy.o config.db.o config.main.o ncurses.utils.o ncurses.gui.o
+config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
 	$(Q)echo "LD $@"
 	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -o $@
 
@@ -43,8 +44,11 @@ defconfig: config.ncurses
 	$(Q)rm -f $(dir $(I)).old.config
 	$(Q)./config.ncurses -C -i $(I)
 
+style:
+	$(Q)astyle --style=linux $(SOURCES) config.db.h config.parser.h config.utils.h
+
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
 		$(wildcard *.o) config.ncurses $(DEPS)
 
-.PHONY: menuconfig silentoldconfig defconfig clean
+.PHONY: menuconfig silentoldconfig defconfig style clean
