@@ -19,17 +19,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <stdbool.h>
 
 typedef char * _string_t;
 typedef struct {
-	int ttype;
-	union {
-		bool b;
-		int n;
-		_string_t s;
-	} piggy;
+    int ttype;
+    union {
+        bool b;
+        int n;
+        _string_t s;
+    } piggy;
 } token_t;
 
 #define TK_BOOL piggy.b
@@ -37,29 +37,29 @@ typedef struct {
 #define TK_STRING piggy.s
 
 #define TOKEN_INVALID (token_t) \
-	{ .ttype = TT_INVALID }
+    { .ttype = TT_INVALID }
 
-#define NULLDESC (token_t) 		\
-	{ .ttype = TT_DESCRIPTION, .TK_STRING = NULL }
+#define NULLDESC (token_t)      \
+    { .ttype = TT_DESCRIPTION, .TK_STRING = NULL }
 
 enum expr_op {
-	OP_NULL = 1,
-	OP_EQUAL,
-	OP_NEQUAL,
-	OP_OR,
-	OP_AND,
-	OP_NOT
+    OP_NULL = 1,
+    OP_EQUAL,
+    OP_NEQUAL,
+    OP_OR,
+    OP_AND,
+    OP_NOT
 };
 
 struct expr {
-	enum expr_op op;
-	struct {
-		union __e {
-			token_t token;
-			struct expr *expr;
-		} up;
-		union __e down;
-	} node;	
+    enum expr_op op;
+    struct {
+        union __e {
+            token_t token;
+            struct expr *expr;
+        } up;
+        union __e down;
+    } node;
 };
 
 #define LEFT node.up
@@ -69,31 +69,32 @@ struct expr {
 #define RIGHT node.down
 
 /* ... entry's dependancy tree. */
-typedef struct expr * _expr_t;	
+typedef struct expr * _expr_t;
 #define EXPR_SIZE sizeof(struct expr)
 
+/*
+ *
+ *
+ */
 struct token_list {
-	void *__private;
-	struct token_list *next;
+    void *private;
+    struct token_list *next;
 };
 
-/* ... list of tokens. */
 typedef struct token_list * _token_list_t;
 #define TL_SIZE sizeof(struct token_list)
 
-#define __token_list_add(_p, _t) ({				\
-	_token_list_t t;							\
-	if ((t = malloc(TL_SIZE)) != NULL) {		\
-		t->__private = (void *)(_p);			\
-		t->next = (_t);							\
-	} t;										\
+#define token_list_add(_p, _t) ({            \
+    _token_list_t t;                         \
+    if ((t = malloc(TL_SIZE)) != NULL) {     \
+        t->private = (void *)(_p);           \
+        t->next = (_t);                      \
+    } t;                                     \
 })
 
-#define token_list_for_each_entry(pos, head)	\
-	for (pos = head;							\
-		 pos != NULL;							\
-		 pos = pos->next)
+#define token_list_for_each_entry(pos, head) \
+    for (pos = (head); pos != NULL; pos = pos->next)
 
-#define token_list_entry_info(_t) (_t)->__private
+#define token_list_entry_info(_t) (_t)->private
 
 #endif /* __CONFIG_PARSER_H__ */
