@@ -25,7 +25,7 @@ lex.yy.c: config.parser.l
 	$(Q)echo "LX $@"
 	$(Q)lex $<
 
-config.ncurses: y.tab.o lex.yy.o config.db.o ncurses.utils.o ncurses.gui.o
+config.ncurses: y.tab.o lex.yy.o config.db.o config.main.o ncurses.utils.o ncurses.gui.o
 	$(Q)echo "LD $@"
 	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -o $@
 
