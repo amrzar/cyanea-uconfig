@@ -17,7 +17,7 @@
 #define __CONFIG_DB_H__
 
 #include "config.parser.h"
-#include "llist.h"
+#include "config.utils.h"
 
 #define SUCCESS 0
 
