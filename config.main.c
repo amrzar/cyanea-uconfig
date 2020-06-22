@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
 
         free(in_filename);
         free(etoken);
-        free(tp);
     }
 
     if (gen_old_config == 1) {

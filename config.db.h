@@ -90,10 +90,11 @@ static inline int __init_entry(struct entry *entry,
 struct extended_token {
     unsigned long flags;
     token_t token;
+
+    struct token_list node;
 };
 
 typedef struct extended_token * _extended_token_t;
-#define ETOKEN_SIZE sizeof(struct extended_token)
 
 /* ... 'next_token' is called for every item's token. */
 extern _token_list_t next_token(_token_list_t, unsigned long, ...);
@@ -106,24 +107,27 @@ typedef struct item {
 #define item_dec(_i) (_i)->refcount--
     unsigned long refcount;
 
-#define item_token_list(_i) (_i)->__list
-#define item_config_token(_i)           \
-    /* ... assuming a config item. */   \
-    token_list_entry_info(item_token_list(_i))
-    _token_list_t __list;
+#define item_token_list_head_entry(_i)      \
+    token_list_entry_info((_i)->tk_list)
+#define item_token_list_for_each(pos, _i)   \
+    token_list_for_each(pos, (_i)->tk_list)
+    _token_list_t tk_list;
 
     struct list_head list;
     struct hlist_node hnode;
 } item_t;
 
+#define token_list_entry_info(_t)           \
+    container_of((_t), struct extended_token, node);
+
 #define SYMTABLE 256
 extern void init_symbol_hash_table(void);
 extern int __populate_config_file(const char *, unsigned long);
 
-#define create_config_file(file) \
+#define create_config_file(file)            \
     __populate_config_file((file), TK_LIST_EF_DEFAULT)
 
-#define write_config_file(file) \
+#define write_config_file(file)             \
     __populate_config_file((file), TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
 
 extern int read_config_file(const char *);
@@ -160,7 +164,7 @@ static inline void toggle_choice(item_t *item, _string_t n)
 {
     _token_list_t tp;
 
-    token_list_for_each_entry(tp, item->__list) {
+    item_token_list_for_each(tp, item) {
         _extended_token_t etoken = token_list_entry_info(tp);
 
         /* ... remove 'TK_LIST_EF_SELECTED', first. */
