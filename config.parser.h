@@ -63,38 +63,23 @@ struct expr {
 };
 
 #define LEFT node.up
-
-/* ... use 'LEFT' for a node. */
 #define NODE LEFT
 #define RIGHT node.down
 
 /* ... entry's dependancy tree. */
 typedef struct expr * _expr_t;
-#define EXPR_SIZE sizeof(struct expr)
 
-/*
- *
- *
- */
 struct token_list {
-    void *private;
     struct token_list *next;
 };
 
 typedef struct token_list * _token_list_t;
-#define TL_SIZE sizeof(struct token_list)
 
-#define token_list_add(_p, _t) ({            \
-    _token_list_t t;                         \
-    if ((t = malloc(TL_SIZE)) != NULL) {     \
-        t->private = (void *)(_p);           \
-        t->next = (_t);                      \
-    } t;                                     \
+#define token_list_add(new, head) ({        \
+    (new)->next = (head); (new);            \
 })
 
-#define token_list_for_each_entry(pos, head) \
+#define token_list_for_each(pos, head)      \
     for (pos = (head); pos != NULL; pos = pos->next)
-
-#define token_list_entry_info(_t) (_t)->private
 
 #endif /* __CONFIG_PARSER_H__ */

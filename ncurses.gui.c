@@ -285,7 +285,7 @@ static config_t *__construct_page(menu_t *menu)
             eval_expr(item->common.dependancy)) {
 
             /* ... never is NULL. */
-            etoken = item_config_token(item);
+            etoken = item_token_list_head_entry(item);
 
             index++;
             if ((tmp = realloc(conf,
@@ -318,7 +318,7 @@ static int radio_item(item_t *item)
 
     int i = 0, in, selected = -1;
     char **choices = NULL;
-    token_list_for_each_entry(tp, item_token_list(item)) {
+    item_token_list_for_each(tp, item) {
         _extended_token_t etoken = token_list_entry_info(tp);
 
         _string_t *tmp;
@@ -423,7 +423,7 @@ int start_gui(int nr_pages)
                 _string_t in;
                 item_t *item = (item_t *)curr_config[choice].__private;
 
-                _extended_token_t etoken = item_config_token(item);
+                _extended_token_t etoken = item_token_list_head_entry(item);
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
                     sprintf (tmp, "%d", etoken->token.TK_INTEGER);
