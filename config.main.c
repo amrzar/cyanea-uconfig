@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         _extended_token_t etoken = token_list_entry_info(tp);
         config_files = config_files->next; /* ... move next. */
 
-        in_filename = dupprompt(etoken->token.TK_STRING);
+        in_filename = strtok(etoken->token.TK_STRING, "\"");
         if (in_filename == NULL) {
             fprintf(stderr, "invalid '.include' in configuration file: %s\n",
                     etoken->token.TK_STRING);
@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
         if (yy_parse_file(in_filename) != 0)
             return -1;
 
-        free(in_filename);
         free(etoken);
     }
 

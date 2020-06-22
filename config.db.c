@@ -94,7 +94,7 @@ int push_menu(token_t token, _expr_t expr)
     menu_t *menu;
 
     if ((menu = malloc(sizeof(menu_t))) != NULL) {
-        menu->prompt = dupprompt(token.TK_STRING);
+        menu->prompt = strtok(token.TK_STRING, "\"");
         if (menu->prompt == NULL)
             return -1;
 
@@ -501,7 +501,7 @@ static void update_select_token_list(_token_list_t head, bool n)
                 }
             } else
                 fprintf(stderr, "... incompatible select: %s, ignore.\n",
-                    etoken->token.TK_STRING);
+                        etoken->token.TK_STRING);
 
         } else
             fprintf(stderr, "... undefined select: %s, ignore.\n",
