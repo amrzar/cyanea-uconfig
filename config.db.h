@@ -41,38 +41,11 @@ struct entry {
     _string_t help;     /* ... help statements. */
 };
 
-static inline _string_t dupprompt(_string_t s)
-{
-    size_t pp;
-    _string_t tmp = NULL;
-
-    if ((pp = strlen(s)) > 2) {
-        /* ... not an empty quotation. */
-
-        int i;
-        for (i = 0; i < pp &&
-             s[i] != '\n'; i++); /* ... check for '\n'. */
-        if (i == pp && (tmp = malloc(pp)) != NULL) {
-            sscanf(s, "\"%[^\"]\"", tmp);
-            free(s);
-        }
-    }
-
-    return tmp;
-}
-
 static inline int __init_entry(struct entry *entry,
                                token_t prompt, token_t symbol,
                                token_t help, _expr_t expr)
 {
-    if (prompt.TK_STRING != NULL) {
-        /* ... prompt is not a 'NULLDESC'. */
-        entry->prompt = dupprompt(prompt.TK_STRING);
-        if (entry->prompt == NULL)
-            return -1;
-    } else
-        entry->prompt = NULL;
-
+    entry->prompt = strtok(prompt.TK_STRING, "\"");
     entry->symbol = symbol.TK_STRING;
     entry->dependancy = expr;
     entry->help = help.TK_STRING;
