@@ -45,7 +45,19 @@ defconfig: config.ncurses
 	$(Q)./config.ncurses -C -i $(I)
 
 style:
-	$(Q)astyle --style=linux $(SOURCES) \
+	$(Q)astyle \
+	--style=attach \
+	--indent-after-parens \
+	--indent-preproc-define \
+	--convert-tabs \
+	--indent-labels \
+	--indent-preproc-cond \
+	--break-blocks \
+	--pad-oper \
+	--pad-comma \
+	--pad-header \
+	--align-pointer=name \
+	--break-one-line-headers \$(SOURCES) \
 		config.db.h config.parser.h config.utils.h ncurses.gui.h
 
 clean:
