@@ -45,7 +45,8 @@ defconfig: config.ncurses
 	$(Q)./config.ncurses -C -i $(I)
 
 style:
-	$(Q)astyle --style=linux $(SOURCES) config.db.h config.parser.h config.utils.h
+	$(Q)astyle --style=linux $(SOURCES) \
+		config.db.h config.parser.h config.utils.h ncurses.gui.h
 
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
