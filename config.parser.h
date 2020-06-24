@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-typedef char * _string_t;
+typedef char *_string_t;
 typedef struct {
     int ttype;
     union {
@@ -67,17 +67,17 @@ struct expr {
 #define RIGHT node.down
 
 /* ... entry's dependancy tree. */
-typedef struct expr * _expr_t;
+typedef struct expr *_expr_t;
 
 struct token_list {
     struct token_list *next;
 };
 
-typedef struct token_list * _token_list_t;
+typedef struct token_list *_token_list_t;
 
 #define token_list_add(new, head) ({        \
-    (new)->next = (head); (new);            \
-})
+        (new)->next = (head); (new);            \
+    })
 
 #define token_list_for_each(pos, head)      \
     for (pos = (head); pos != NULL; pos = pos->next)

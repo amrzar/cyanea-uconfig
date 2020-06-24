@@ -21,10 +21,10 @@
 #define TERMINAL_LINES 30
 #define TERMINAL_COLS 80
 
-#define TITLE_LINE 2	/* ... index of screen's title line. */
-#define TITLE_HIGH 6	/* ... number of lines in title section. */
-#define FOOTNOTE_HIGH 2	/* ... number of lines in footnote section. */
-#define MARGIN_LEFT 2	/* ... index of screen's margin. */
+#define TITLE_LINE 2    /* ... index of screen's title line. */
+#define TITLE_HIGH 6    /* ... number of lines in title section. */
+#define FOOTNOTE_HIGH 2 /* ... number of lines in footnote section. */
+#define MARGIN_LEFT 2   /* ... index of screen's margin. */
 
 #define __MAIN_MENU_HIGH (LINES - TITLE_HIGH - FOOTNOTE_HIGH - 2)
 
@@ -38,14 +38,14 @@ extern int open_message_box(int, int, int, int, const char *, const char *[]);
 extern _string_t open_input_box(int, int, int, int, const char *, const char *, _string_t, const char *);
 extern int open_radio_box(int, int, int, int, const char *, _string_t[], int, int, int);
 
-#define INPUT_BOX(h, prompt, def, regex) 		\
-    open_input_box(MAIN_MENU_HIGH, 				\
-    	SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,	\
-    	h, prompt, def, regex)
+#define INPUT_BOX(h, prompt, def, regex)        \
+    open_input_box(MAIN_MENU_HIGH,              \
+        SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,  \
+        h, prompt, def, regex)
 
-#define RADIO_BOX(h, choices, n, sel, size) 	\
-    open_radio_box(MAIN_MENU_HIGH, 				\
-    	SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,	\
-    	h, choices, n, sel, size)
+#define RADIO_BOX(h, choices, n, sel, size)     \
+    open_radio_box(MAIN_MENU_HIGH,              \
+        SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,  \
+        h, choices, n, sel, size)
 
 #endif /* __NCURSES_GUI_H__ */

@@ -42,9 +42,8 @@ struct entry {
 };
 
 static inline int __init_entry(struct entry *entry,
-                               token_t prompt, token_t symbol,
-                               token_t help, _expr_t expr)
-{
+    token_t prompt, token_t symbol,
+    token_t help, _expr_t expr) {
     entry->prompt = strtok(prompt.TK_STRING, "\"");
     entry->symbol = symbol.TK_STRING;
     entry->dependancy = expr;
@@ -67,7 +66,7 @@ struct extended_token {
     struct token_list node;
 };
 
-typedef struct extended_token * _extended_token_t;
+typedef struct extended_token *_extended_token_t;
 
 /* ... 'next_token' is called for every item's token. */
 extern _token_list_t next_token(_token_list_t, unsigned long, ...);
@@ -106,12 +105,12 @@ extern int __populate_config_file(const char *, unsigned long);
 extern int read_config_file(const char *);
 extern void __fprintf_menu(FILE *, menu_t *);
 
-static inline int build_autoconfig(const char *filename)
-{
+static inline int build_autoconfig(const char *filename) {
     FILE *fp;
 
     if ((fp = fopen(filename, "w+")) == NULL)
         return -1;
+
     __fprintf_menu(fp, &mainmenu);
     fclose(fp);
 
@@ -120,9 +119,9 @@ static inline int build_autoconfig(const char *filename)
 
 extern int push_menu(token_t, _expr_t);
 extern int add_new_config_entry(token_t, token_t, token_t,
-                                _token_list_t, _expr_t, token_t);
+    _token_list_t, _expr_t, token_t);
 extern int add_new_choice_entry(token_t, token_t,
-                                _token_list_t, _expr_t, token_t);
+    _token_list_t, _expr_t, token_t);
 extern int add_new_config_file(token_t);
 extern int pop_menu(void);
 
@@ -133,8 +132,7 @@ extern _expr_t expr_op_expr_two(enum expr_op, _expr_t, _expr_t);
 extern bool eval_expr(_expr_t);
 
 extern void __toggle_choice(_extended_token_t, _string_t);
-static inline void toggle_choice(item_t *item, _string_t n)
-{
+static inline void toggle_choice(item_t *item, _string_t n) {
     _token_list_t tp;
 
     item_token_list_for_each(tp, item) {

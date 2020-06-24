@@ -20,10 +20,10 @@
 
 #include "config.db.h"
 
-int wattrpr(WINDOW *win, int y, int x, const char *s)
-{
+int wattrpr(WINDOW *win, int y, int x, const char *s) {
     int attr = 0, slen = 0;
     wmove(win, y, x);
+
     for (int i = 0; i < strlen(s); i++) {
         if (s[i] == '%') {
             if (s[++i] == 'b')
@@ -46,8 +46,7 @@ int wattrpr(WINDOW *win, int y, int x, const char *s)
 }
 
 static WINDOW *draw_popup(int height, int width,
-                          int y, int x, const char *keys[])
-{
+    int y, int x, const char *keys[]) {
     int offset = 2, i;
     WINDOW *wpopup;
 
@@ -58,7 +57,7 @@ static WINDOW *draw_popup(int height, int width,
 
         for (i = 0; keys[i] != NULL; i++) {
             offset += wattrpr(wpopup,
-                              height + 2, offset, keys[i]);
+                    height + 2, offset, keys[i]);
             offset++;
         }
     }
@@ -67,8 +66,7 @@ static WINDOW *draw_popup(int height, int width,
 }
 
 int open_textfile(int height, int width,
-                  int y, int x, const char *filename, int ssize)
-{
+    int y, int x, const char *filename, int ssize) {
     WINDOW *pad;
 
     _string_t line = NULL;
@@ -80,21 +78,24 @@ int open_textfile(int height, int width,
         return ERR;
 
     FILE *fp;
+
     if ((fp = fopen(filename, "r")) != NULL) {
         while (getline(&line, &n, fp) != -1)
             wprintw(pad, "%s", line);
 
         fclose(fp);
+
         if (line != NULL)
             free(line);
     } else
         wprintw(pad, "can not open '%s'\n", filename);
 
     prefresh(pad, 0, 0, y, x,
-             height + y - 1, width + x - 1);
+        height + y - 1, width + x - 1);
 
     keypad(pad, TRUE);
-    while(1) {
+
+    while (1) {
         getch_key = wgetch(pad);
 
         if (getch_key == KEY_UP) {
@@ -110,7 +111,7 @@ int open_textfile(int height, int width,
             break;
 
         prefresh(pad, pad_row, 0,
-                 y, x, height + y - 1, width + x - 1);
+            y, x, height + y - 1, width + x - 1);
     }
 
     delwin(pad);
@@ -118,17 +119,16 @@ int open_textfile(int height, int width,
 }
 
 int open_message_box(int height, int width,
-                     int y, int x, const char *message, const char *keys[])
-{
+    int y, int x, const char *message, const char *keys[]) {
     int getch_key;
     WINDOW *wpopup, *wmessage;
 
     if ((wpopup = draw_popup(height,
-                             width, y, x, keys)) == NULL)
+                    width, y, x, keys)) == NULL)
         return ERR;
 
     if ((wmessage = derwin(wpopup,
-                           height, width - 2, 1, 2)) == NULL) {
+                    height, width - 2, 1, 2)) == NULL) {
         delwin(wpopup);
         return ERR;
     }
@@ -145,9 +145,8 @@ int open_message_box(int height, int width,
 }
 
 _string_t open_input_box(int height, int width,
-                         int y, int x, const char *info,	const char *message,
-                         _string_t initial, const char *regexp)
-{
+    int y, int x, const char *info,    const char *message,
+    _string_t initial, const char *regexp) {
 #define caption fields[0] /* ... caption field of input box. */
 #define textbox fields[1] /* ... textbox field of input box. */
 
@@ -165,7 +164,7 @@ _string_t open_input_box(int height, int width,
     };
 
     if ((wpopup = draw_popup(height,
-                             width, y, x, keys)) == NULL)
+                    width, y, x, keys)) == NULL)
         return NULL;
 
     if ((wmessage = derwin(wpopup, height - 1, width - 2, 1, 2)) == NULL ||
@@ -176,11 +175,12 @@ _string_t open_input_box(int height, int width,
 
     /* ... allocate fields. */
     int caps_sz = strlen(message);
+
     if ((caption = new_field(1, caps_sz, 0, 0, 0, 0)) == NULL)
         goto input_box_exit;
 
     if ((textbox = new_field(1, width - caps_sz - 3,
-                             0, caps_sz + 1, 0, 0)) == NULL) {
+                    0, caps_sz + 1, 0, 0)) == NULL) {
         free_field(caption);
         goto input_box_exit;
     }
@@ -206,8 +206,10 @@ _string_t open_input_box(int height, int width,
 
     curs_set(1);
     keypad(wpopup, TRUE);
-    while(1) {
+
+    while (1) {
         getch_key = wgetch(wpopup);
+
         if (getch_key == KEY_RESIZE)
             break;
 
@@ -219,8 +221,11 @@ _string_t open_input_box(int height, int width,
             _string_t tmp = field_buffer(textbox, 0);
 
             int n = strlen(tmp);
+
             /* ... trimed and null-terminated string. */
-            while(n > 2 && isspace(tmp[n - 1])) n--;
+            while (n > 2 && isspace(tmp[n - 1]))
+                n--;
+
             ret = strndup(tmp, n);
             break;
         }
@@ -233,16 +238,20 @@ _string_t open_input_box(int height, int width,
         case KEY_LEFT:
             form_driver(form, REQ_PREV_CHAR);
             break;
+
         case KEY_RIGHT:
             form_driver(form, REQ_NEXT_CHAR);
             break;
+
         case KEY_BACKSPACE:
         case 127:
             form_driver(form, REQ_DEL_PREV);
             break;
+
         case KEY_DC:
             form_driver(form, REQ_DEL_CHAR);
             break;
+
         default:
             form_driver(form, getch_key);
             break;
@@ -263,9 +272,8 @@ input_box_exit:
 }
 
 int open_radio_box(int height, int width, int y, int x,
-                   const char *message, _string_t choices[],
-                   int max_row, int selected, int ssize)
-{
+    const char *message, _string_t choices[],
+    int max_row, int selected, int ssize) {
 
     MENU *menu;
     ITEM **items;
@@ -280,21 +288,23 @@ int open_radio_box(int height, int width, int y, int x,
     };
 
     if ((wpopup = draw_popup(height,
-                             width, y, x, keys)) == NULL)
+                    width, y, x, keys)) == NULL)
         return -1;
 
     if ((wmessage = derwin(wpopup, height - ssize,
-                           width - 2, 1, 2)) == NULL ||
-        (winput = derwin(wpopup, ssize,	width - 2,
-                         height - ssize + 1, 2)) == NULL)
+                    width - 2, 1, 2)) == NULL ||
+        (winput = derwin(wpopup, ssize, width - 2,
+                    height - ssize + 1, 2)) == NULL)
         goto radio_box_exit;
 
     mvwprintw(wmessage, 0, 0, message);
 
     items = alloca((max_row + 1) * sizeof(ITEM *));
-    for(i = 0; i < max_row; i++) {
+
+    for (i = 0; i < max_row; i++) {
         items[i] = new_item(choices[i],
-                            (i == selected) ? "[*]" : "[ ]");
+                (i == selected) ? "[*]" : "[ ]");
+
         if (items[i] == NULL)
             goto radio_box_exit_item;
     }
@@ -312,8 +322,10 @@ int open_radio_box(int height, int width, int y, int x,
     post_menu(menu);
 
     keypad(wpopup, TRUE);
-    while(1) {
+
+    while (1) {
         getch_key = wgetch(wpopup);
+
         if (getch_key == KEY_RESIZE)
             break;
 
@@ -327,16 +339,19 @@ int open_radio_box(int height, int width, int y, int x,
         if (getch_key == KEY_F(5))
             break;
 
-        switch(getch_key) {
+        switch (getch_key) {
         case KEY_DOWN:
             menu_driver(menu, REQ_DOWN_ITEM);
             break;
+
         case KEY_UP:
             menu_driver(menu, REQ_UP_ITEM);
             break;
+
         case KEY_NPAGE:
             menu_driver(menu, REQ_SCR_DPAGE);
             break;
+
         case KEY_PPAGE:
             menu_driver(menu, REQ_SCR_UPAGE);
             break;
@@ -347,7 +362,8 @@ int open_radio_box(int height, int width, int y, int x,
     free_menu(menu);
 
 radio_box_exit_item:
-    while(i > 0)
+
+    while (i > 0)
         free_item(items[--i]);
 
 radio_box_exit:

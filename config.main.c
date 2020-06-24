@@ -20,8 +20,7 @@
 
 extern int yy_parse_file(const char *filename);
 
-void print_help(char *pname)
-{
+void print_help(char *pname) {
     printf("\nUse: %s [OPTIONS]\n", pname);
     printf("  [-C]      creates default '.old.config' from the input config file\n");
     printf("  [-u]      open the GUI\n");
@@ -32,8 +31,7 @@ void print_help(char *pname)
 #define _IN_FILE "configs.in"
 #define _OUT_FILE "sys.config.h"
 #define _IN_FOLDER dirname(in_filename)
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int option_index = 0;
     int gen_old_config = 0, need_gui = 0;
     _string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
@@ -77,14 +75,16 @@ int main(int argc, char *argv[])
     }
 
     _token_list_t tp;
+
     while ((tp = config_files) != NULL) {
         _extended_token_t etoken = token_list_entry_info(tp);
         config_files = config_files->next; /* ... move next. */
 
         in_filename = strtok(etoken->token.TK_STRING, "\"");
+
         if (in_filename == NULL) {
             fprintf(stderr, "invalid '.include' in configuration file: %s\n",
-                    etoken->token.TK_STRING);
+                etoken->token.TK_STRING);
             return -1;
         }
 
@@ -114,7 +114,8 @@ int main(int argc, char *argv[])
                     perror("Writing '.old.config'");
                     return -1;
                 }
-            } else return 0;
+            } else
+                return 0;
         }
 
         if (build_autoconfig(out_filename) == -1) {
