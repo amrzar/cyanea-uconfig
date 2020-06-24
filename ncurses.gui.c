@@ -35,11 +35,11 @@ static const char *footnote_message[] = {
 
 enum config_type {
     CONF_MENU,
-#define _CONF_MENU 	"[+] %s"
+#define _CONF_MENU  "[+] %s"
     CONF_YES,
-#define _CONF_YES 	"[*] %s"
+#define _CONF_YES   "[*] %s"
     CONF_NO,
-#define _CONF_NO 	"[ ] %s"
+#define _CONF_NO    "[ ] %s"
     CONF_INPUT,
 #define _CONF_INPUT "    %s"
     CONF_RADIO
@@ -54,8 +54,7 @@ typedef struct {
 static WINDOW *main_screen;
 static WINDOW *middle = NULL, *footnote = NULL;
 
-static int init_screen(void)
-{
+static int init_screen(void) {
     static int X = 0, Y = 0;
 
     if (X != COLS || Y != LINES) {
@@ -65,12 +64,13 @@ static int init_screen(void)
         delwin(footnote);
 
         middle = subwin(main_screen, __MAIN_MENU_HIGH,
-                        SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT);
+                SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT);
+
         if (middle == NULL)
             return ERR;
 
         footnote = subwin(main_screen, FOOTNOTE_HIGH,
-                          SCREEN_WIDTH, LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT);
+                SCREEN_WIDTH, LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT);
 
         if (footnote == NULL) {
             delwin(middle);
@@ -83,17 +83,16 @@ static int init_screen(void)
     return OK;
 }
 
-static int draw_screen(void)
-{
+static int draw_screen(void) {
     if (init_screen() == ERR)
         return ERR;
 
     wborder(main_screen, 32, 32, 32, 32, 32, 32, 32, 32);
     wattrpr(main_screen, TITLE_LINE,
-            COLS / 2 - strlen(screen_title) / 2, screen_title);
+        COLS / 2 - strlen(screen_title) / 2, screen_title);
 
     for (int i = 0; i < FOOTNOTE_HIGH ||
-         footnote_message[i] != NULL; i++)
+        footnote_message[i] != NULL; i++)
         wattrpr(footnote, i, 0, footnote_message[i]);
 
     return OK;
@@ -102,8 +101,7 @@ static int draw_screen(void)
 #define PROMPT_MENU(_e) ((menu_t *)(_e).private)->prompt
 #define PROMPT_ITEM(_e) ((item_t *)(_e).private)->common.prompt
 static void draw_main_menu(const char *menu_title,
-                           config_t choices[], int current_highlight, int choice_start)
-{
+    config_t choices[], int current_highlight, int choice_start) {
     int menu_high = 0;
     int current_row = choice_start;
 
@@ -112,7 +110,7 @@ static void draw_main_menu(const char *menu_title,
     mvwprintw(middle, 0, 0, "[-] %s", menu_title);
 
     while (choices[current_row].private != NULL &&
-           menu_high < MAIN_MENU_HIGH) {
+        menu_high < MAIN_MENU_HIGH) {
 
         if (current_row == current_highlight)
             wattron(middle, A_STANDOUT);
@@ -120,42 +118,47 @@ static void draw_main_menu(const char *menu_title,
         switch (choices[current_row].t) {
         case CONF_MENU:
             mvwprintw(middle, menu_high + 2, 0, _CONF_MENU,
-                      PROMPT_MENU(choices[current_row]));
+                PROMPT_MENU(choices[current_row]));
             break;
+
         case CONF_YES:
-            mvwprintw(middle, menu_high + 2, 0,	_CONF_YES,
-                      PROMPT_ITEM(choices[current_row]));
+            mvwprintw(middle, menu_high + 2, 0, _CONF_YES,
+                PROMPT_ITEM(choices[current_row]));
             break;
+
         case CONF_NO:
-            mvwprintw(middle, menu_high + 2, 0,	_CONF_NO,
-                      PROMPT_ITEM(choices[current_row]));
+            mvwprintw(middle, menu_high + 2, 0, _CONF_NO,
+                PROMPT_ITEM(choices[current_row]));
             break;
+
         case CONF_INPUT:
             mvwprintw(middle, menu_high + 2, 0, _CONF_INPUT,
-                      PROMPT_ITEM(choices[current_row]));
+                PROMPT_ITEM(choices[current_row]));
             break;
+
         case CONF_RADIO:
-            mvwprintw(middle, menu_high + 2, 0,	_CONF_RADIO,
-                      PROMPT_ITEM(choices[current_row]));
+            mvwprintw(middle, menu_high + 2, 0, _CONF_RADIO,
+                PROMPT_ITEM(choices[current_row]));
             break;
+
         default: /* ... we never gets here! */
             mvwprintw(middle, menu_high + 2, 0,
-                      "err. unrecognised configuration item.");
+                "err. unrecognised configuration item.");
         }
 
         if (current_row == current_highlight)
             wattroff(middle, A_STANDOUT);
+
         current_row++;
         menu_high++;
     }
 }
 
-#define SPECIAL_KEY_BS	-1	/* ... 'Backspace' pressed. */
-#define SPECIAL_KEY_Q	-2	/* ... 'Q' pressed. */
-#define SPECIAL_KEY_H	-3	/* ... 'H' pressed. */
+#define SPECIAL_KEY_BS  -1  /* ... 'Backspace' pressed. */
+#define SPECIAL_KEY_Q   -2  /* ... 'Q' pressed. */
+#define SPECIAL_KEY_H   -3  /* ... 'H' pressed. */
 static int main_menu_driver(const char *menu_title,
-                            config_t choices[], int selected_row)
-{
+    config_t choices[], int selected_row) {
     int choice_start = 0;
     int max_row = 0, getch_key = 0;
 
@@ -173,6 +176,7 @@ static int main_menu_driver(const char *menu_title,
             if (getch_key == KEY_UP) {
                 if (selected_row > 0)
                     selected_row--;
+
                 if (selected_row < choice_start &&
                     choice_start > 0)
                     choice_start--;
@@ -181,6 +185,7 @@ static int main_menu_driver(const char *menu_title,
             if (getch_key == KEY_DOWN) {
                 if (selected_row < max_row - 1) {
                     selected_row++;
+
                     if (selected_row - choice_start >= MAIN_MENU_HIGH)
                         choice_start++;
                 }
@@ -201,7 +206,7 @@ static int main_menu_driver(const char *menu_title,
         } else {
             clear();
             mvwprintw(main_screen, 0, 0, "%s",
-                      "Terminal is too small...");
+                "Terminal is too small...");
         }
 
         /* ... also refresh 'main_screen', here. */
@@ -213,8 +218,7 @@ static int main_menu_driver(const char *menu_title,
     return selected_row;
 }
 
-static config_t *menu_to_config_struct(menu_t *menu)
-{
+static config_t *menu_to_config_struct(menu_t *menu) {
     menu_t *m;
     item_t *item;
 
@@ -225,6 +229,7 @@ static config_t *menu_to_config_struct(menu_t *menu)
         if (eval_expr(m->dependancy)) {
 
             tmp = realloc(conf, ++num * sizeof(config_t));
+
             if (tmp == NULL) {
                 free(conf);
                 return NULL;
@@ -244,6 +249,7 @@ static config_t *menu_to_config_struct(menu_t *menu)
             etoken = item_token_list_head_entry(item);
 
             tmp = realloc(conf, ++num * sizeof(config_t));
+
             if (tmp == NULL) {
                 free(conf);
                 return NULL;
@@ -251,10 +257,11 @@ static config_t *menu_to_config_struct(menu_t *menu)
 
             conf = tmp;
             conf[num - 2].private = item;
+
             if (etoken->flags & TK_LIST_EF_CONFIG) {
                 if (etoken->token.ttype == TT_BOOL)
                     conf[num - 2].t = etoken->token.TK_BOOL ?
-                                      CONF_YES : CONF_NO;
+                        CONF_YES : CONF_NO;
                 else
                     conf[num - 2].t = CONF_INPUT;
             } else
@@ -267,8 +274,7 @@ static config_t *menu_to_config_struct(menu_t *menu)
     return conf;
 }
 
-static int __open_radio_item(item_t *item)
-{
+static int __open_radio_item(item_t *item) {
     _token_list_t tp;
 
     int num = 0, in, selected = -1;
@@ -278,12 +284,14 @@ static int __open_radio_item(item_t *item)
         _extended_token_t etoken = token_list_entry_info(tp);
 
         tmp = realloc(choices, ++num * sizeof(_string_t));
+
         if (tmp == NULL) {
             free(choices);
             return -1;
         }
 
         choices = tmp;
+
         if (etoken->token.ttype == TT_INTEGER) {
             choices[num - 1] = alloca(64);
             snprintf(choices[num - 1], 64, "%d", etoken->token.TK_INTEGER);
@@ -296,14 +304,14 @@ static int __open_radio_item(item_t *item)
     }
 
     in = RADIO_BOX("", choices, num, selected, 5);
+
     if (in != -1)
         toggle_choice(item, choices[in]);
 
     return 0;
 }
 
-int start_gui(int nr_pages)
-{
+int start_gui(int nr_pages) {
     int k, ret = 0;
     int choice = 0, index = 0;
 
@@ -326,17 +334,19 @@ int start_gui(int nr_pages)
         curr_config = menu_to_config_struct(pages[index]);
         k = main_menu_driver((pages[index]->prompt == NULL) ?
 
-                             /* ... menu title: 'Options' as main title. */
-                             "Options" : pages[index]->prompt,
-                             curr_config, choice);
+                /* ... menu title: 'Options' as main title. */
+                "Options" : pages[index]->prompt,
+                curr_config, choice);
 
         switch (k) {
         case SPECIAL_KEY_BS:
-            if (index > 0) index--;
+            if (index > 0)
+                index--;
+
             break;
 
         case SPECIAL_KEY_Q:
-            while(1) {
+            while (1) {
                 static const char exit_message[] = {
                     "All changes are written to '.old.config' "         \
                     "and system configuration header is generated.\n"   \
@@ -351,8 +361,8 @@ int start_gui(int nr_pages)
                 };
 
                 int d = open_message_box(2, 90,
-                                         LINES / 2, COLS / 2 - 45,
-                                         exit_message, exit_message_buttons);
+                        LINES / 2, COLS / 2 - 45,
+                        exit_message, exit_message_buttons);
 
                 if (d == 'x') {
                     ret = -1;
@@ -368,15 +378,17 @@ int start_gui(int nr_pages)
                 else if (d == KEY_RESIZE)
                     break; /* ... terminal resized. */
             }
+
             break;
 
         case SPECIAL_KEY_H:
             open_textfile(__MAIN_MENU_HIGH, SCREEN_WIDTH,
-                          TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
+                TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
             break;
 
         default:
             choice = k; /* ... 'k' is not special key. */
+
             if (curr_config[choice].t == CONF_MENU)
                 pages[++index] = curr_config[choice].private;
 
@@ -391,19 +403,22 @@ int start_gui(int nr_pages)
                 item_t *item = (item_t *)curr_config[choice].private;
 
                 _extended_token_t etoken = item_token_list_head_entry(item);
+
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
                     sprintf (tmp, "%d", etoken->token.TK_INTEGER);
 
                     /* ... regex: accept only numeric. */
                     in = INPUT_BOX("", item->common.prompt, tmp, "^[0-9]* *$");
+
                     if (in != NULL)
                         toggle_config(item, atoi(in));
 
                 } else { /* and TT_DESCRIPTION. */
                     in = INPUT_BOX("", item->common.prompt,
-                                   /* ... regex: description. */
-                                   etoken->token.TK_STRING, "^\"[^\"]*\" *$");
+                            /* ... regex: description. */
+                            etoken->token.TK_STRING, "^\"[^\"]*\" *$");
+
                     if (in != NULL)
                         toggle_config(item, in);
                 }
