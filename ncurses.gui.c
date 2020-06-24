@@ -15,52 +15,23 @@
 
 #include <ncurses.h>
 
-#include "config.db.h"
+#include "ncurses.gui.h"
 #include "y.tab.h"
 
-static const char TITLE[] = {
+static const char screen_title[] = {
     ".:%bCyanea ukernel%r Configuration:."
 };
 
-static const char *FOOTNOTE[] = {
+static const char *footnote_message[] = {
     "Press [%bReturn%r] to select and [%bBackspace%r] to go back ...",
     "Press [%bh%r] for help and [%bq%r] to exit.",
     NULL
 };
 
-static const char exit_message[] = {
-    "All changes are written to '.old.config' and system configuration header is generated.\n" \
-    "... to ignore all changes choose exit."
-};
 
-static const char *exit_message_buttons[] = {
-    "%H[%bS%rave and Exit]%h",
-    "%H[E%bx%rit]%h",
-    "%H[%bC%rancel]%h",
-    NULL
-};
 
-#define TITLE_LINE 2	/* ... index of screen's title line. */
-#define TITLE_HIGH 6	/* ... number of lines in title section. */
-#define FOOTNOTE_HIGH 2	/* ... number of lines in footnote section. */
-#define MARGIN_LEFT 2	/* ... index of sreen's margin. */
 
-#define MAIN_MENU_HIGH LINES - TITLE_HIGH - FOOTNOTE_HIGH - 2
-/* ... size of menu on screen: visible area in the middle of screen. */
-#define VISIBLE_MAIN_MENU_HIGH MAIN_MENU_HIGH - 5
-#define SCREEN_WIDTH COLS - 2 * MARGIN_LEFT
 
-/* 'MIN_TERM_LINES x MIN_TERM_COLS' is minimum size of terminal. */
-#define MIN_TERM_LINES 30
-#define MIN_TERM_COLS 80
-
-extern int wattrp(WINDOW *, int, int, const char *);
-extern int open_textfile(int, int, int, int, const char *, int);
-extern int open_message_box(int, int, int, int, const char *, const char *[]);
-extern _string_t open_input_box(int, int, int, int,
-                                const char *, const char *, _string_t, const char *);
-extern int open_radio_box(int, int, int, int,
-                          const char *, _string_t [], int, int, int);
 
 enum config_type {
     CONF_MENU,
@@ -77,12 +48,11 @@ enum config_type {
 
 typedef struct {
     enum config_type t;
-    void *__private;
+    void *private;
 } config_t;
 
-static WINDOW *__main_screen;
-/* ... secreen sections: middle and footnote. */
-static WINDOW *middle = NULL, *fnote = NULL;
+static WINDOW *main_screen;
+static WINDOW *middle = NULL, *footnote = NULL;
 
 static int init_screen(void)
 {
@@ -92,49 +62,45 @@ static int init_screen(void)
         /* ... delete screen. */
         clear();
         delwin(middle);
-        delwin(fnote);
+        delwin(footnote);
 
-        if ((middle = subwin(__main_screen,
-                             MAIN_MENU_HIGH, SCREEN_WIDTH,
-                             TITLE_HIGH, MARGIN_LEFT)) == NULL)
+        middle = subwin(main_screen, __MAIN_MENU_HIGH,
+                        SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT);
+        if (middle == NULL)
             return ERR;
 
-        if ((fnote = subwin(__main_screen,
-                            FOOTNOTE_HIGH, SCREEN_WIDTH,
-                            LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT)) == NULL) {
+        footnote = subwin(main_screen, FOOTNOTE_HIGH,
+                          SCREEN_WIDTH, LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT);
+
+        if (footnote == NULL) {
             delwin(middle);
             return ERR;
         }
 
-        getmaxyx(__main_screen, Y, X);
+        getmaxyx(main_screen, Y, X);
     }
+
     return OK;
 }
 
 static int draw_screen(void)
 {
-    int line, xtitle = COLS / 2 - strlen(TITLE) / 2;
-
-    /* ... partition the screen. */
     if (init_screen() == ERR)
         return ERR;
 
-    /* ... assume a place holder for screen border: use space. */
-    wborder(__main_screen, 32, 32, 32, 32, 32, 32, 32, 32);
-    wattrp(__main_screen, TITLE_LINE, xtitle, TITLE);
+    wborder(main_screen, 32, 32, 32, 32, 32, 32, 32, 32);
+    wattrpr(main_screen, TITLE_LINE,
+            COLS / 2 - strlen(screen_title) / 2, screen_title);
 
-    for (line = 0; line < FOOTNOTE_HIGH ||
-         FOOTNOTE[line] != NULL; line++) {
-        /* ... make sure text fit the footnote. */
-        if (strlen(FOOTNOTE[line]) < SCREEN_WIDTH)
-            wattrp(fnote, line, 0, FOOTNOTE[line]);
-    }
+    for (int i = 0; i < FOOTNOTE_HIGH ||
+         footnote_message[i] != NULL; i++)
+        wattrpr(footnote, i, 0, footnote_message[i]);
 
     return OK;
 }
 
-#define PROMPT_MENU(_e) ((menu_t *)(_e).__private)->prompt
-#define PROMPT_ITEM(_e) ((item_t *)(_e).__private)->common.prompt
+#define PROMPT_MENU(_e) ((menu_t *)(_e).private)->prompt
+#define PROMPT_ITEM(_e) ((item_t *)(_e).private)->common.prompt
 static void draw_main_menu(const char *menu_title,
                            config_t choices[], int current_highlight, int choice_start)
 {
@@ -143,12 +109,10 @@ static void draw_main_menu(const char *menu_title,
 
     draw_screen();
     werase(middle); /* ... erase previous menu. */
-    wattron(middle, A_BOLD);
     mvwprintw(middle, 0, 0, "[-] %s", menu_title);
-    wattroff(middle, A_BOLD);
 
-    while (choices[current_row].__private != NULL &&
-           menu_high < VISIBLE_MAIN_MENU_HIGH) {
+    while (choices[current_row].private != NULL &&
+           menu_high < MAIN_MENU_HIGH) {
 
         if (current_row == current_highlight)
             wattron(middle, A_STANDOUT);
@@ -186,10 +150,6 @@ static void draw_main_menu(const char *menu_title,
     }
 }
 
-/*
- * 'main_menu_driver' is the main entry to the GUI.
- * It returns the special key pressed or the index in to the menu. */
-
 #define SPECIAL_KEY_BS	-1	/* ... 'Backspace' pressed. */
 #define SPECIAL_KEY_Q	-2	/* ... 'Q' pressed. */
 #define SPECIAL_KEY_H	-3	/* ... 'H' pressed. */
@@ -199,16 +159,16 @@ static int main_menu_driver(const char *menu_title,
     int choice_start = 0;
     int max_row = 0, getch_key = 0;
 
-    while (choices[max_row].__private != NULL)
+    while (choices[max_row].private != NULL)
         max_row++;
 
     if (selected_row >= max_row)
         selected_row = 0;
 
-    keypad(__main_screen, TRUE);
+    keypad(main_screen, TRUE);
 
     while (getch_key != KEY_ENTER && getch_key != '\n') {
-        if (COLS > MIN_TERM_COLS && LINES > MIN_TERM_LINES) {
+        if (COLS > TERMINAL_COLS && LINES > TERMINAL_LINES) {
 
             if (getch_key == KEY_UP) {
                 if (selected_row > 0)
@@ -217,10 +177,11 @@ static int main_menu_driver(const char *menu_title,
                     choice_start > 0)
                     choice_start--;
             }
+
             if (getch_key == KEY_DOWN) {
                 if (selected_row < max_row - 1) {
                     selected_row++;
-                    if (selected_row - choice_start >= VISIBLE_MAIN_MENU_HIGH)
+                    if (selected_row - choice_start >= MAIN_MENU_HIGH)
                         choice_start++;
                 }
             }
@@ -239,111 +200,103 @@ static int main_menu_driver(const char *menu_title,
 
         } else {
             clear();
-            mvwprintw(__main_screen, 0, 0, "%s",
+            mvwprintw(main_screen, 0, 0, "%s",
                       "Terminal is too small...");
         }
 
-        /* ... also refresh '__main_screen', here. */
+        /* ... also refresh 'main_screen', here. */
         getch_key = getch();
     }
 
-    keypad(__main_screen, FALSE);
+    keypad(main_screen, FALSE);
 
     return selected_row;
 }
 
-static config_t *__construct_page(menu_t *menu)
+static config_t *menu_to_config_struct(menu_t *menu)
 {
     menu_t *m;
     item_t *item;
 
-    int index = 0;
-    config_t *tmp, *conf;
-
-    if ((conf = malloc(sizeof(config_t))) == NULL)
-        return NULL;
+    int num = 1;
+    config_t *tmp, *conf = NULL;
 
     list_for_each_entry(m, &menu->childs, sibling) {
         if (eval_expr(m->dependancy)) {
-            index++; /* ... new entry. */
-            if ((tmp = realloc(conf,
-                               (index + 1) * sizeof(config_t))) == NULL) {
+
+            tmp = realloc(conf, ++num * sizeof(config_t));
+            if (tmp == NULL) {
                 free(conf);
                 return NULL;
             }
 
             conf = tmp;
-            conf[index - 1].t = CONF_MENU;
-            conf[index - 1].__private = m;
+            conf[num - 2].private = m;
+            conf[num - 2].t = CONF_MENU;
         }
     }
 
     list_for_each_entry(item, &menu->entries, list) {
-        _extended_token_t etoken;
-
         if (item->common.prompt != NULL &&
             eval_expr(item->common.dependancy)) {
+            _extended_token_t etoken;
 
-            /* ... never is NULL. */
             etoken = item_token_list_head_entry(item);
 
-            index++;
-            if ((tmp = realloc(conf,
-                               (index + 1) * sizeof(config_t))) == NULL) {
+            tmp = realloc(conf, ++num * sizeof(config_t));
+            if (tmp == NULL) {
                 free(conf);
                 return NULL;
             }
 
             conf = tmp;
-            conf[index - 1].__private = item;
+            conf[num - 2].private = item;
             if (etoken->flags & TK_LIST_EF_CONFIG) {
                 if (etoken->token.ttype == TT_BOOL)
-                    conf[index - 1].t = etoken->token.TK_BOOL ?
-                                        CONF_YES : CONF_NO;
+                    conf[num - 2].t = etoken->token.TK_BOOL ?
+                                      CONF_YES : CONF_NO;
                 else
-                    conf[index - 1].t = CONF_INPUT;
+                    conf[num - 2].t = CONF_INPUT;
             } else
-                conf[index - 1].t = CONF_RADIO;
+                conf[num - 2].t = CONF_RADIO;
         }
     }
 
     /* ... set terminating entry. */
-    conf[index].__private = NULL;
+    conf[num - 1].private = NULL;
     return conf;
 }
 
-static int radio_item(item_t *item)
+static int __open_radio_item(item_t *item)
 {
     _token_list_t tp;
 
-    int i = 0, in, selected = -1;
-    char **choices = NULL;
+    int num = 0, in, selected = -1;
+    _string_t *tmp, *choices = NULL;
+
     item_token_list_for_each(tp, item) {
         _extended_token_t etoken = token_list_entry_info(tp);
 
-        _string_t *tmp;
-        if ((tmp = realloc(choices,
-                           (i + 1) * sizeof(_string_t))) == NULL) {
+        tmp = realloc(choices, ++num * sizeof(_string_t));
+        if (tmp == NULL) {
             free(choices);
             return -1;
         }
 
         choices = tmp;
         if (etoken->token.ttype == TT_INTEGER) {
-            choices[i] = alloca(64);
-            sprintf(choices[i], "%d", etoken->token.TK_INTEGER);
+            choices[num - 1] = alloca(64);
+            snprintf(choices[num - 1], 64, "%d", etoken->token.TK_INTEGER);
 
         } else /* and TT_DESCRIPTION. */
-            choices[i] = etoken->token.TK_STRING;
+            choices[num - 1] = etoken->token.TK_STRING;
 
         if (etoken->flags & TK_LIST_EF_SELECTED)
-            selected = i;
-
-        i++;
+            selected = num - 1;
     }
 
-    if ((in = open_radio_box(VISIBLE_MAIN_MENU_HIGH, SCREEN_WIDTH,
-                             TITLE_HIGH, MARGIN_LEFT, "", choices, i, selected, 5)) != -1)
+    in = RADIO_BOX("", choices, num, selected, 5);
+    if (in != -1)
         toggle_choice(item, choices[in]);
 
     return 0;
@@ -358,7 +311,7 @@ int start_gui(int nr_pages)
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
     pages[index] = &mainmenu;
 
-    __main_screen = initscr();
+    main_screen = initscr();
 
     curs_set(0);
     start_color();
@@ -370,7 +323,7 @@ int start_gui(int nr_pages)
     init_pair(2, COLOR_BLACK, COLOR_BLUE); /* ... disable. */
 
     while (1) {
-        curr_config = __construct_page(pages[index]);
+        curr_config = menu_to_config_struct(pages[index]);
         k = main_menu_driver((pages[index]->prompt == NULL) ?
 
                              /* ... menu title: 'Options' as main title. */
@@ -384,8 +337,22 @@ int start_gui(int nr_pages)
 
         case SPECIAL_KEY_Q:
             while(1) {
-                int d = open_message_box(2, 90, LINES / 2,
-                                         COLS / 2 - 45, exit_message, exit_message_buttons);
+                static const char exit_message[] = {
+                    "All changes are written to '.old.config' "         \
+                    "and system configuration header is generated.\n"   \
+                    "... to ignore all changes choose exit."
+                };
+
+                static const char *exit_message_buttons[] = {
+                    "%H[%bS%rave and Exit]%h",
+                    "%H[E%bx%rit]%h",
+                    "%H[%bC%rancel]%h",
+                    NULL
+                };
+
+                int d = open_message_box(2, 90,
+                                         LINES / 2, COLS / 2 - 45,
+                                         exit_message, exit_message_buttons);
 
                 if (d == 'x') {
                     ret = -1;
@@ -404,47 +371,44 @@ int start_gui(int nr_pages)
             break;
 
         case SPECIAL_KEY_H:
-            open_textfile(MAIN_MENU_HIGH, SCREEN_WIDTH,
+            open_textfile(__MAIN_MENU_HIGH, SCREEN_WIDTH,
                           TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
             break;
 
         default:
             choice = k; /* ... 'k' is not special key. */
             if (curr_config[choice].t == CONF_MENU)
-                pages[++index] = curr_config[choice].__private;
+                pages[++index] = curr_config[choice].private;
 
             else if (curr_config[choice].t == CONF_YES)
-                toggle_config(curr_config[choice].__private);
+                toggle_config(curr_config[choice].private);
 
             else if (curr_config[choice].t == CONF_NO)
-                toggle_config(curr_config[choice].__private);
+                toggle_config(curr_config[choice].private);
 
             else if (curr_config[choice].t == CONF_INPUT) {
                 _string_t in;
-                item_t *item = (item_t *)curr_config[choice].__private;
+                item_t *item = (item_t *)curr_config[choice].private;
 
                 _extended_token_t etoken = item_token_list_head_entry(item);
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
                     sprintf (tmp, "%d", etoken->token.TK_INTEGER);
 
-                    in = open_input_box(VISIBLE_MAIN_MENU_HIGH, SCREEN_WIDTH,
-                                        TITLE_HIGH, MARGIN_LEFT, "", item->common.prompt,
-                                        tmp, "^[0-9]* *$"); /* ... regex: accept only numeric. */
-
+                    /* ... regex: accept only numeric. */
+                    in = INPUT_BOX("", item->common.prompt, tmp, "^[0-9]* *$");
                     if (in != NULL)
                         toggle_config(item, atoi(in));
 
                 } else { /* and TT_DESCRIPTION. */
-                    in = open_input_box(VISIBLE_MAIN_MENU_HIGH, SCREEN_WIDTH,
-                                        TITLE_HIGH, MARGIN_LEFT, "", item->common.prompt,
-                                        etoken->token.TK_STRING, "^\"[^\"]*\" *$"); /* ... regex: description. */
-
+                    in = INPUT_BOX("", item->common.prompt,
+                                   /* ... regex: description. */
+                                   etoken->token.TK_STRING, "^\"[^\"]*\" *$");
                     if (in != NULL)
                         toggle_config(item, in);
                 }
             } else /* and 'CONF_RADIO'. */
-                radio_item(curr_config[choice].__private);
+                __open_radio_item(curr_config[choice].private);
         }
 
         free(curr_config);

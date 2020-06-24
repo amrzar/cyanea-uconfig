@@ -20,7 +20,7 @@
 
 #include "config.db.h"
 
-int wattrp(WINDOW *win, int y, int x, const char *s)
+int wattrpr(WINDOW *win, int y, int x, const char *s)
 {
     int attr = 0, slen = 0;
     wmove(win, y, x);
@@ -57,8 +57,8 @@ static WINDOW *draw_popup(int height, int width,
         wborder(wpopup, 0, 0, 0, 0, 0, 0, 0, 0);
 
         for (i = 0; keys[i] != NULL; i++) {
-            offset += wattrp(wpopup,
-                             height + 2, offset, keys[i]);
+            offset += wattrpr(wpopup,
+                              height + 2, offset, keys[i]);
             offset++;
         }
     }
