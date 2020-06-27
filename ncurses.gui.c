@@ -229,17 +229,14 @@ static int main_menu_driver(const char *menu_title,
     return selected_row;
 }
 
-static inline config_t *relloc_conf(config_t *conf, int num) {
-    config_t *tmp = realloc(conf, num * sizeof(config_t));
+#define __realloc(_s, _n, _sz) ({                       \
+        typeof(_s) tmp = realloc((_s), (_n) * (_sz));   \
+        if (tmp == NULL)                                \
+            free((_s));                                 \
+        (tmp);                                          \
+    })
 
-    if (tmp == NULL) {
-        free(conf);
-        return NULL;
-    }
-
-    return tmp;
-}
-
+#define relloc_conf(_c, _n) __realloc((_c), (_n), sizeof(config_t))
 static config_t *menu_to_config_struct(menu_t *menu) {
     menu_t *m;
     item_t *item;
@@ -293,23 +290,18 @@ static config_t *menu_to_config_struct(menu_t *menu) {
     return conf;
 }
 
+#define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(_string_t))
 static int __open_radio_item(item_t *item) {
     _token_list_t tp;
 
     int num = 0, in, selected = -1;
-    _string_t *tmp, *choices = NULL;
+    _string_t *choices = NULL;
 
     item_token_list_for_each(tp, item) {
         _extended_token_t etoken = token_list_entry_info(tp);
 
-        tmp = realloc(choices, ++num * sizeof(_string_t));
-
-        if (tmp == NULL) {
-            free(choices);
+        if ((choices = relloc_str(choices, ++num)) == NULL)
             return -1;
-        }
-
-        choices = tmp;
 
         if (etoken->token.ttype == TT_INTEGER) {
             choices[num - 1] = alloca(64);
@@ -343,7 +335,7 @@ int start_gui(int nr_pages) {
 
     __init_ncurses();
 
-    EVENTLOOP {
+    while (1) {
         curr_config = menu_to_config_struct(pages[index]);
 
         if (curr_config == NULL) {
@@ -365,7 +357,7 @@ int start_gui(int nr_pages) {
             break;
 
         case SPECIAL_KEY_Q:
-            EVENTLOOP {
+            while (1) {
                 static const char exit_message[] = {
                     "%bAre you sure?%r"
                 };

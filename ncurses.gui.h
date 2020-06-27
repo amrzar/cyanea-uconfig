@@ -41,8 +41,6 @@ extern int open_message_box(int, int, int, int, const char *, const char *[]);
 extern _string_t open_input_box(int, int, int, int, const char *, const char *, _string_t, const char *);
 extern int open_radio_box(int, int, int, int, const char *, _string_t[], int, int, int);
 
-#define EVENTLOOP while (1)
-
 #define INPUT_BOX(h, prompt, def, regex)        \
     open_input_box(MAIN_MENU_HIGH,              \
         SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,  \

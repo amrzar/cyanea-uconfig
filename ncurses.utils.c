@@ -81,7 +81,7 @@ int open_textfile(int height, int width,
 
     keypad(pad, TRUE);
 
-    EVENTLOOP {
+    while (1) {
         prefresh(pad, pad_row, 0,
             y, x, height + y - 1, width + x - 1);
 
@@ -221,7 +221,7 @@ _string_t open_input_box(int height, int width,
     curs_set(1);
     keypad(POPUP, TRUE);
 
-    EVENTLOOP {
+    while (1) {
         __getchar(getch_key);
 
         if (getch_key == KEY_RESIZE ||
@@ -317,7 +317,7 @@ int open_radio_box(int height, int width, int y, int x,
 
     keypad(POPUP, TRUE);
 
-    EVENTLOOP {
+    while (1) {
         __getchar(getch_key);
 
         if (getch_key == KEY_RESIZE ||
