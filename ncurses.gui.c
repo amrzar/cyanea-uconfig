@@ -339,7 +339,7 @@ int start_gui(int nr_pages) {
 
     /* ... allocate stack for traversing menu. */
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
-    pages[index] = &mainmenu;
+    pages[index] = MAINMENU;
 
     __init_ncurses();
 

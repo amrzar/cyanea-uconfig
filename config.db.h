@@ -32,6 +32,7 @@ typedef struct menu {
 
 /* ... parser output. */
 extern menu_t mainmenu;
+#define MAINMENU (&mainmenu)
 extern _token_list_t config_files;
 
 struct entry {
@@ -111,7 +112,7 @@ static inline int build_autoconfig(const char *filename) {
     if ((fp = fopen(filename, "w+")) == NULL)
         return -1;
 
-    __fprintf_menu(fp, &mainmenu);
+    __fprintf_menu(fp, MAINMENU);
     fclose(fp);
 
     return SUCCESS;

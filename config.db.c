@@ -29,7 +29,7 @@ menu_t mainmenu = {
     LIST_HEAD_INIT(mainmenu.sibling)
 };
 
-static menu_t *curr_menu = &mainmenu;
+static menu_t *curr_menu = MAINMENU;
 
 _token_list_t config_files = NULL;
 static struct hlist_head symtable[SYMTABLE];
