@@ -18,7 +18,16 @@
 #include <form.h>
 #include <menu.h>
 
-#include "config.db.h"
+#include "ncurses.gui.h"
+
+static inline _string_t trim_tail(_string_t str) {
+    int slen = strlen(str);
+
+    while (isspace(str[slen - 1]) != 0)
+        slen--;
+
+    return strndup(str, slen);
+}
 
 int wattrpr(WINDOW *win, int y, int x, const char *s) {
     int attr = 0, slen = 0;
@@ -45,26 +54,6 @@ int wattrpr(WINDOW *win, int y, int x, const char *s) {
     return slen;
 }
 
-static WINDOW *draw_popup(int height, int width,
-    int y, int x, const char *keys[]) {
-    int offset = 2, i;
-    WINDOW *wpopup;
-
-    /* ... only assume two lines for buttons plus borsers. */
-    if ((wpopup = newwin(height + 4, width + 2, y - 1, x - 1)) != NULL) {
-        wbkgd(wpopup, COLOR_PAIR(1));
-        wborder(wpopup, 0, 0, 0, 0, 0, 0, 0, 0);
-
-        for (i = 0; keys[i] != NULL; i++) {
-            offset += wattrpr(wpopup,
-                    height + 2, offset, keys[i]);
-            offset++;
-        }
-    }
-
-    return wpopup;
-}
-
 int open_textfile(int height, int width,
     int y, int x, const char *filename, int ssize) {
     WINDOW *pad;
@@ -77,9 +66,9 @@ int open_textfile(int height, int width,
     if ((pad = newpad(ssize, width)) == NULL)
         return ERR;
 
-    FILE *fp;
+    FILE *fp = fopen(filename, "r");
 
-    if ((fp = fopen(filename, "r")) != NULL) {
+    if (fp != NULL) {
         while (getline(&line, &n, fp) != -1)
             wprintw(pad, "%s", line);
 
@@ -88,14 +77,14 @@ int open_textfile(int height, int width,
         if (line != NULL)
             free(line);
     } else
-        wprintw(pad, "can not open '%s'\n", filename);
-
-    prefresh(pad, 0, 0, y, x,
-        height + y - 1, width + x - 1);
+        wprintw(pad, "Err. '%s'\n", filename);
 
     keypad(pad, TRUE);
 
-    while (1) {
+    EVENTLOOP {
+        prefresh(pad, pad_row, 0,
+            y, x, height + y - 1, width + x - 1);
+
         getch_key = wgetch(pad);
 
         if (getch_key == KEY_UP) {
@@ -104,113 +93,139 @@ int open_textfile(int height, int width,
         } else if (getch_key == KEY_DOWN) {
             if (pad_row < ssize - height)
                 pad_row++;
-        } else if (getch_key == KEY_RESIZE) {
-            ungetch(getch_key);
-            break;
         } else
             break;
-
-        prefresh(pad, pad_row, 0,
-            y, x, height + y - 1, width + x - 1);
     }
 
     delwin(pad);
     return OK;
 }
 
-int open_message_box(int height, int width,
-    int y, int x, const char *message, const char *keys[]) {
-    int getch_key;
-    WINDOW *wpopup, *wmessage;
+static WINDOW *__popup, *__message;
+#define POPUP __popup
+#define MESSAGE __message
+static int newpopup(int height, int width,
+    int y, int x, int H, const char *message, const char *keys[]) {
+    int offset, i;
 
-    if ((wpopup = draw_popup(height,
-                    width, y, x, keys)) == NULL)
+    POPUP = newwin(height + 4, width + 2, y - 1, x - 1);
+
+    if (POPUP == NULL)
         return ERR;
 
-    if ((wmessage = derwin(wpopup,
-                    height, width - 2, 1, 2)) == NULL) {
-        delwin(wpopup);
+    wbkgd(POPUP, POPUP_COLOR_ATTR);
+    wborder(POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    MESSAGE = derwin(POPUP, height - H, width - 2, 1, 2);
+
+    if (MESSAGE == NULL) {
+        delwin(POPUP);
         return ERR;
     }
 
-    mvwprintw(wmessage, 0, 0, message);
+    wbkgd(MESSAGE, POPUP_COLOR_ATTR);
+    wattrpr(MESSAGE, 0, 0, message);
 
-    keypad(wpopup, TRUE);
-    getch_key = wgetch(wpopup);
+    for (i = 0, offset = 2; keys[i] != NULL; i++, offset++)
+        offset += wattrpr(POPUP, height + 2, offset, keys[i]);
 
-    delwin(wmessage);
-    delwin(wpopup);
+    return OK;
+}
+
+static int delpopup(void) {
+    if (delwin(__popup) == ERR ||
+        delwin(__message) == ERR)
+        return ERR;
+
+    return OK;
+}
+
+#define __getchar(_k) do {      \
+        (_k) = wgetch(POPUP);   \
+    } while(0)
+
+int open_message_box(int height, int width,
+    int y, int x, const char *message, const char *keys[]) {
+    int getch_key;
+
+    if (newpopup(height, width, y, x, 0, message, keys) == ERR)
+        return ERR;
+
+    keypad(POPUP, TRUE);
+    __getchar(getch_key);
+    delpopup();
 
     return getch_key;
 }
 
-_string_t open_input_box(int height, int width,
-    int y, int x, const char *info,    const char *message,
-    _string_t initial, const char *regexp) {
-#define caption fields[0] /* ... caption field of input box. */
-#define textbox fields[1] /* ... textbox field of input box. */
-
-    FORM *form;
-    FIELD *fields[3] = { NULL };
-    WINDOW *wpopup, *wmessage, *wform = NULL;
-    int getch_key;
-
-    _string_t ret = NULL;
-
-    static const char *keys[] =   /* ... some info for user. */
-    {
-        "Press [%bReturn%r] to confirm or [%bF5%r] to cancel.",
+static const char **okcancel_keys(void) {
+    static const char *keys[] = {
+        "[%bReturn%r]"
+        "[%bEsc%r]",
         NULL
     };
 
-    if ((wpopup = draw_popup(height,
-                    width, y, x, keys)) == NULL)
+    return keys;
+}
+
+_string_t open_input_box(int height, int width,
+    int y, int x, const char *help, const char *message,
+    _string_t initial, const char *regexp) {
+
+    int getch_key;
+    WINDOW *form_win;
+
+    _string_t ret = NULL;
+
+    if (newpopup(height, width, y, x, 1, help, okcancel_keys()) == ERR)
         return NULL;
 
-    if ((wmessage = derwin(wpopup, height - 1, width - 2, 1, 2)) == NULL ||
-        (wform = derwin(wpopup, 1, width - 2, height, 2)) == NULL)
+    if ((form_win = derwin(POPUP, 1, width - 2, height, 2)) == NULL)
         goto input_box_exit;
 
-    mvwprintw(wmessage, 0, 0, info);
+    FIELD *fields[3] = { NULL };
+#define __caption fields[0]
+#define __textbox fields[1]
 
-    /* ... allocate fields. */
-    int caps_sz = strlen(message);
-
-    if ((caption = new_field(1, caps_sz, 0, 0, 0, 0)) == NULL)
+    if ((__caption = new_field(1, strlen(message), 0, 0, 0, 0)) == NULL)
         goto input_box_exit;
 
-    if ((textbox = new_field(1, width - caps_sz - 3,
-                    0, caps_sz + 1, 0, 0)) == NULL) {
-        free_field(caption);
+    if ((__textbox = new_field(1, width - strlen(message) - 3,
+                    0, strlen(message) + 1, 0, 0)) == NULL) {
+        free_field(__caption);
         goto input_box_exit;
     }
 
-    set_field_buffer(caption, 0, message);
-    set_field_opts(caption, O_STATIC | O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
-    set_field_back(caption, COLOR_PAIR(1));
+#define __init_field(_w, _m, _a, _o) do {   \
+        set_field_buffer((_w), 0, (_m));        \
+        set_field_opts((_w), (_o));             \
+        set_field_back((_w), (_a));             \
+    } while (0)
 
-    set_field_buffer(textbox, 0, initial);
-    set_field_opts(textbox, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-    set_field_back(textbox, A_BOLD);
-    set_field_type(textbox, TYPE_REGEXP, regexp);
+    __init_field(__caption, message, POPUP_COLOR_ATTR,
+        O_STATIC | O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
 
-    if ((form = new_form(fields)) == NULL) {
-        free_field(caption);
-        free_field(textbox);
-        goto input_box_exit;
-    }
+    __init_field(__textbox, initial, A_BOLD,
+        O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+    set_field_type(__textbox, TYPE_REGEXP, regexp);
 
-    set_form_win(form, wpopup);
-    set_form_sub(form, wform);
+    FORM *form;
+
+    if ((form = new_form(fields)) == NULL)
+        goto input_box_exit_form_field;
+
+    set_form_win(form, POPUP);
+    set_form_sub(form, form_win);
     post_form(form);
 
     curs_set(1);
-    keypad(wpopup, TRUE);
+    keypad(POPUP, TRUE);
 
-    while (1) {
-        getch_key = wgetch(wpopup);
+    EVENTLOOP {
+        __getchar(getch_key);
 
-        if (getch_key == KEY_RESIZE)
+        if (getch_key == KEY_RESIZE ||
+            getch_key == 27)
             break;
 
         if (getch_key == KEY_ENTER ||
@@ -218,21 +233,9 @@ _string_t open_input_box(int height, int width,
             if (form_driver(form, REQ_VALIDATION) != E_OK)
                 continue;
 
-            _string_t tmp = field_buffer(textbox, 0);
-
-            int n = strlen(tmp);
-
-            /* ... trimed and null-terminated string. */
-            while (n > 2 && isspace(tmp[n - 1]))
-                n--;
-
-            ret = strndup(tmp, n);
+            ret = trim_tail(field_buffer(__textbox, 0));
             break;
         }
-
-        /* ... user canceled us. */
-        if (getch_key == KEY_F(5))
-            break;
 
         switch (getch_key) {
         case KEY_LEFT:
@@ -258,16 +261,17 @@ _string_t open_input_box(int height, int width,
         }
     }
 
+    curs_set(0);
     unpost_form(form);
     free_form(form);
-    free_field(caption);
-    free_field(textbox);
-    curs_set(0);
+
+input_box_exit_form_field:
+    free_field(__caption);
+    free_field(__textbox);
 
 input_box_exit:
-    delwin(wmessage);
-    delwin(wform);
-    delwin(wpopup);
+    delwin(form_win);
+    delpopup();
     return ret;
 }
 
@@ -275,58 +279,49 @@ int open_radio_box(int height, int width, int y, int x,
     const char *message, _string_t choices[],
     int max_row, int selected, int ssize) {
 
-    MENU *menu;
-    ITEM **items;
-    WINDOW *wpopup, *wmessage, *winput = NULL;
+    WINDOW *menu_win;
     int getch_key, i;
 
     int ret = -1;
 
-    static const char *keys[] = {
-        "Press [%bReturn%r] to confirm or [%bF5%r] to cancel.",
-        NULL
-    };
-
-    if ((wpopup = draw_popup(height,
-                    width, y, x, keys)) == NULL)
+    if (newpopup(height, width, y, x, ssize, message, okcancel_keys()) == ERR)
         return -1;
 
-    if ((wmessage = derwin(wpopup, height - ssize,
-                    width - 2, 1, 2)) == NULL ||
-        (winput = derwin(wpopup, ssize, width - 2,
+    if ((menu_win = derwin(POPUP, ssize, width - 2,
                     height - ssize + 1, 2)) == NULL)
         goto radio_box_exit;
 
-    mvwprintw(wmessage, 0, 0, message);
-
-    items = alloca((max_row + 1) * sizeof(ITEM *));
+    ITEM **items = alloca((max_row + 1) * sizeof(ITEM *));
 
     for (i = 0; i < max_row; i++) {
         items[i] = new_item(choices[i],
                 (i == selected) ? "[*]" : "[ ]");
 
         if (items[i] == NULL)
-            goto radio_box_exit_item;
+            goto radio_box_exit_from_item;
     }
 
     items[i] = NULL;
 
-    if ((menu = new_menu(items)) == NULL)
-        goto radio_box_exit_item;
+    MENU *menu;
 
-    set_menu_win(menu, wpopup);
-    set_menu_sub(menu, winput);
+    if ((menu = new_menu(items)) == NULL)
+        goto radio_box_exit_from_item;
+
+    set_menu_win(menu, POPUP);
+    set_menu_sub(menu, menu_win);
     set_menu_mark(menu, "  ");
     set_menu_format(menu, ssize, 1);
-    set_menu_back(menu, COLOR_PAIR(1));
+    set_menu_back(menu, POPUP_COLOR_ATTR);
     post_menu(menu);
 
-    keypad(wpopup, TRUE);
+    keypad(POPUP, TRUE);
 
-    while (1) {
-        getch_key = wgetch(wpopup);
+    EVENTLOOP {
+        __getchar(getch_key);
 
-        if (getch_key == KEY_RESIZE)
+        if (getch_key == KEY_RESIZE ||
+            getch_key == 27)
             break;
 
         if (getch_key == KEY_ENTER ||
@@ -334,10 +329,6 @@ int open_radio_box(int height, int width, int y, int x,
             ret = item_index(current_item(menu));
             break;
         }
-
-        /* ... user canceled us. */
-        if (getch_key == KEY_F(5))
-            break;
 
         switch (getch_key) {
         case KEY_DOWN:
@@ -361,14 +352,13 @@ int open_radio_box(int height, int width, int y, int x,
     unpost_menu(menu);
     free_menu(menu);
 
-radio_box_exit_item:
+radio_box_exit_from_item:
 
     while (i > 0)
         free_item(items[--i]);
 
 radio_box_exit:
-    delwin(wmessage);
-    delwin(winput);
-    delwin(wpopup);
+    delwin(menu_win);
+    delpopup();
     return ret;
 }

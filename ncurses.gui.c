@@ -28,22 +28,17 @@ static const char *footnote_message[] = {
     NULL
 };
 
-
-
-
-
-
 enum config_type {
     CONF_MENU,
-#define _CONF_MENU  "[+] %s"
+#define _CONF_MENU  "    [+] %s"
     CONF_YES,
-#define _CONF_YES   "[*] %s"
+#define _CONF_YES   "    [*] %s"
     CONF_NO,
-#define _CONF_NO    "[ ] %s"
+#define _CONF_NO    "    [ ] %s"
     CONF_INPUT,
-#define _CONF_INPUT "    %s"
+#define _CONF_INPUT "        %s"
     CONF_RADIO
-#define _CONF_RADIO "    %s"
+#define _CONF_RADIO "        %s"
 };
 
 typedef struct {
@@ -53,6 +48,20 @@ typedef struct {
 
 static WINDOW *main_screen;
 static WINDOW *middle = NULL, *footnote = NULL;
+
+static inline void __init_ncurses(void) {
+    main_screen = initscr();
+
+    curs_set(0);
+    start_color();
+
+    cbreak();
+    noecho();
+    set_escdelay(0);
+
+    init_pair(1, COLOR_WHITE, COLOR_BLUE);
+    init_pair(2, COLOR_BLACK, COLOR_BLUE);
+}
 
 static int init_screen(void) {
     static int X = 0, Y = 0;
@@ -107,7 +116,9 @@ static void draw_main_menu(const char *menu_title,
 
     draw_screen();
     werase(middle); /* ... erase previous menu. */
+    wattron(middle, A_BOLD);
     mvwprintw(middle, 0, 0, "[-] %s", menu_title);
+    wattroff(middle, A_BOLD);
 
     while (choices[current_row].private != NULL &&
         menu_high < MAIN_MENU_HIGH) {
@@ -218,24 +229,32 @@ static int main_menu_driver(const char *menu_title,
     return selected_row;
 }
 
+static inline config_t *relloc_conf(config_t *conf, int num) {
+    config_t *tmp = realloc(conf, num * sizeof(config_t));
+
+    if (tmp == NULL) {
+        free(conf);
+        return NULL;
+    }
+
+    return tmp;
+}
+
 static config_t *menu_to_config_struct(menu_t *menu) {
     menu_t *m;
     item_t *item;
 
     int num = 1;
-    config_t *tmp, *conf = NULL;
+    static int conf_size = 0;
+    static config_t *conf = NULL;
 
     list_for_each_entry(m, &menu->childs, sibling) {
         if (eval_expr(m->dependancy)) {
 
-            tmp = realloc(conf, ++num * sizeof(config_t));
+            if (++num > conf_size)
+                if ((conf = relloc_conf(conf, num)) == NULL)
+                    return NULL;
 
-            if (tmp == NULL) {
-                free(conf);
-                return NULL;
-            }
-
-            conf = tmp;
             conf[num - 2].private = m;
             conf[num - 2].t = CONF_MENU;
         }
@@ -246,17 +265,13 @@ static config_t *menu_to_config_struct(menu_t *menu) {
             eval_expr(item->common.dependancy)) {
             _extended_token_t etoken;
 
-            etoken = item_token_list_head_entry(item);
+            if (++num > conf_size)
+                if ((conf = relloc_conf(conf, num)) == NULL)
+                    return NULL;
 
-            tmp = realloc(conf, ++num * sizeof(config_t));
-
-            if (tmp == NULL) {
-                free(conf);
-                return NULL;
-            }
-
-            conf = tmp;
             conf[num - 2].private = item;
+
+            etoken = item_token_list_head_entry(item);
 
             if (etoken->flags & TK_LIST_EF_CONFIG) {
                 if (etoken->token.ttype == TT_BOOL)
@@ -271,6 +286,10 @@ static config_t *menu_to_config_struct(menu_t *menu) {
 
     /* ... set terminating entry. */
     conf[num - 1].private = NULL;
+
+    if (num > conf_size)
+        conf_size = num;
+
     return conf;
 }
 
@@ -303,40 +322,40 @@ static int __open_radio_item(item_t *item) {
             selected = num - 1;
     }
 
-    in = RADIO_BOX("", choices, num, selected, 5);
+    in = RADIO_BOX(item->common.help, choices, num, selected,
+            (num > 5) ? 5 : num);
 
     if (in != -1)
         toggle_choice(item, choices[in]);
 
+    free(choices);
     return 0;
 }
 
 int start_gui(int nr_pages) {
     int k, ret = 0;
     int choice = 0, index = 0;
-
     config_t *curr_config;
+
+    /* ... allocate stack for traversing menu. */
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
     pages[index] = &mainmenu;
 
-    main_screen = initscr();
+    __init_ncurses();
 
-    curs_set(0);
-    start_color();
-
-    cbreak();
-    noecho();
-
-    init_pair(1, COLOR_WHITE, COLOR_BLUE); /* ... popup window. */
-    init_pair(2, COLOR_BLACK, COLOR_BLUE); /* ... disable. */
-
-    while (1) {
+    EVENTLOOP {
         curr_config = menu_to_config_struct(pages[index]);
+
+        if (curr_config == NULL) {
+            ret = -2;
+            break;
+        }
+
         k = main_menu_driver((pages[index]->prompt == NULL) ?
 
-                /* ... menu title: 'Options' as main title. */
-                "Options" : pages[index]->prompt,
-                curr_config, choice);
+            /* ... menu title: 'Options' as main title. */
+            "Options" : pages[index]->prompt,
+            curr_config, choice);
 
         switch (k) {
         case SPECIAL_KEY_BS:
@@ -346,17 +365,15 @@ int start_gui(int nr_pages) {
             break;
 
         case SPECIAL_KEY_Q:
-            while (1) {
+            EVENTLOOP {
                 static const char exit_message[] = {
-                    "All changes are written to '.old.config' "         \
-                    "and system configuration header is generated.\n"   \
-                    "... to ignore all changes choose exit."
+                    "%bAre you sure?%r"
                 };
 
                 static const char *exit_message_buttons[] = {
-                    "%H[%bS%rave and Exit]%h",
-                    "%H[E%bx%rit]%h",
-                    "%H[%bC%rancel]%h",
+                    "[%bS%rave and Exit]",
+                    "[E%bx%rit]",
+                    "[%bC%rancel]",
                     NULL
                 };
 
@@ -369,10 +386,13 @@ int start_gui(int nr_pages) {
                     goto end_gui;
                 }
 
-                else if (d == 'S' || d == 's') {
+                else if (d == 'S' ||
+                    d == 's') {
                     goto end_gui;
 
-                } else if (d == 'C' || d == 'c')
+                } else if (d == 'C' ||
+                    d == 'c' ||
+                    d == 27)
                     break;
 
                 else if (d == KEY_RESIZE)
@@ -399,24 +419,27 @@ int start_gui(int nr_pages) {
                 toggle_config(curr_config[choice].private);
 
             else if (curr_config[choice].t == CONF_INPUT) {
+                item_t *item;
+                _extended_token_t etoken;
                 _string_t in;
-                item_t *item = (item_t *)curr_config[choice].private;
 
-                _extended_token_t etoken = item_token_list_head_entry(item);
+                item = (item_t *)curr_config[choice].private;
+                etoken = item_token_list_head_entry(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
-                    sprintf (tmp, "%d", etoken->token.TK_INTEGER);
+                    snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
 
                     /* ... regex: accept only numeric. */
-                    in = INPUT_BOX("", item->common.prompt, tmp, "^[0-9]* *$");
+                    in = INPUT_BOX(item->common.help,
+                            item->common.prompt, tmp, "^[0-9]* *$");
 
                     if (in != NULL)
                         toggle_config(item, atoi(in));
 
+                    free(in);
                 } else { /* and TT_DESCRIPTION. */
-                    in = INPUT_BOX("", item->common.prompt,
-                            /* ... regex: description. */
+                    in = INPUT_BOX(item->common.help, item->common.prompt,
                             etoken->token.TK_STRING, "^\"[^\"]*\" *$");
 
                     if (in != NULL)
@@ -425,17 +448,16 @@ int start_gui(int nr_pages) {
             } else /* and 'CONF_RADIO'. */
                 __open_radio_item(curr_config[choice].private);
         }
-
-        free(curr_config);
     }
 
 end_gui:
+    free(curr_config);
+    free(pages);
+
     clear();
     nocbreak();
     echo();
     endwin();
-
-    free(pages);
 
     return ret;
 }
