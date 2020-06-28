@@ -330,9 +330,10 @@ static int __open_radio_item(item_t *item) {
     return 0;
 }
 
-#define cur_config config[__selected_row]
 int start_gui(int nr_pages) {
     int k, ret = 0, index = 0;
+
+#define cur_config config[__selected_row]
     config_t *config;
 
     /* ... allocate stack for traversing menu. */
