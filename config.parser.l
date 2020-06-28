@@ -74,20 +74,20 @@ extern void yyerror(char *s);
 
 %%
 
-int yy_parse_file(const char *filename)
-{
+int yy_parse_file(const char *filename) {
     FILE *filep;
 
     printf("... config file: %s\n", filename);
-    if ((filep = fopen(filename, "r")) == NULL)
-        {
-            perror("Unable to open config file");
-            return -1;
-        }
+
+    if ((filep = fopen(filename, "r")) == NULL) {
+        perror("Unable to open config file");
+        return -1;
+    }
 
     yyset_in(filep);
 
     int ret = 0;
+
     if ((ret = yyparse()) != 0)
         fprintf(stderr, "yacc failed with %d\n", ret);
 
