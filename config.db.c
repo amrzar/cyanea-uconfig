@@ -90,11 +90,7 @@ int push_menu(token_t token, _expr_t expr) {
     menu_t *menu;
 
     if ((menu = malloc(sizeof(menu_t))) != NULL) {
-        menu->prompt = strtok(token.TK_STRING, "\"");
-
-        if (menu->prompt == NULL)
-            return -1;
-
+        menu->prompt = UNQUOT(token.TK_STRING);
         menu->dependancy = expr;
         init_list_head(&menu->entries);
         init_list_head(&menu->childs);
@@ -136,6 +132,14 @@ _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
     va_end(valist);
 
     return NULL;
+}
+
+void free_etoken(_extended_token_t e) {
+    if (e->token.ttype == TT_SYMBOL ||
+        e->token.ttype == TT_DESCRIPTION)
+        free(e->token.TK_STRING);
+
+    free(e);
 }
 
 int add_new_config_entry(token_t token1, token_t token2,
@@ -200,7 +204,8 @@ int add_new_choice_entry(token_t token1, token_t token2,
 }
 
 int add_new_config_file(token_t token1) {
-    if ((config_files = next_token(config_files, TK_LIST_EF_NULL, token1)) == NULL)
+    if ((config_files = next_token(config_files,
+                    TK_LIST_EF_NULL, token1)) == NULL)
         return -1;
 
     return SUCCESS;

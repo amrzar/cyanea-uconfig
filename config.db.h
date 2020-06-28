@@ -42,10 +42,19 @@ struct entry {
     _string_t help;     /* ... help statements. */
 };
 
+#define UNQUOT(_s) ({                               \
+        int i;                                      \
+        if ((_s) != NULL) {                         \
+            for (i = 0; (_s)[i + 1] != '"'; i++)    \
+                (_s)[i] = (_s)[i + 1];              \
+            (_s)[i] = '\0';                         \
+        } (_s);                                     \
+    })
+
 static inline int __init_entry(struct entry *entry,
     token_t prompt, token_t symbol,
     token_t help, _expr_t expr) {
-    entry->prompt = strtok(prompt.TK_STRING, "\"");
+    entry->prompt = UNQUOT(prompt.TK_STRING);
     entry->symbol = symbol.TK_STRING;
     entry->dependancy = expr;
     entry->help = help.TK_STRING;
@@ -71,6 +80,7 @@ typedef struct extended_token *_extended_token_t;
 
 /* ... 'next_token' is called for every item's token. */
 extern _token_list_t next_token(_token_list_t, unsigned long, ...);
+extern void free_etoken(_extended_token_t);
 
 typedef struct item {
     struct entry common;
@@ -80,9 +90,9 @@ typedef struct item {
 #define item_dec(_i) (_i)->refcount--
     unsigned long refcount;
 
-#define item_token_list_head_entry(_i)      \
+#define item_token_list_head_entry(_i)              \
     token_list_entry_info((_i)->tk_list)
-#define item_token_list_for_each(pos, _i)   \
+#define item_token_list_for_each(pos, _i)           \
     token_list_for_each(pos, (_i)->tk_list)
     _token_list_t tk_list;
 
@@ -90,17 +100,17 @@ typedef struct item {
     struct hlist_node hnode;
 } item_t;
 
-#define token_list_entry_info(_t)           \
+#define token_list_entry_info(_t)                   \
     container_of((_t), struct extended_token, node);
 
 #define SYMTABLE 256
 extern void init_symbol_hash_table(void);
 extern int __populate_config_file(const char *, unsigned long);
 
-#define create_config_file(file)            \
+#define create_config_file(file)                    \
     __populate_config_file((file), TK_LIST_EF_DEFAULT)
 
-#define write_config_file(file)             \
+#define write_config_file(file)                     \
     __populate_config_file((file), TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
 
 extern int read_config_file(const char *);
