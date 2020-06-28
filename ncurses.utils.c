@@ -54,30 +54,16 @@ int wattrpr(WINDOW *win, int y, int x, const char *s) {
     return slen;
 }
 
-int open_textfile(int height, int width,
-    int y, int x, const char *filename, int ssize) {
+int __open_newpad(int height, int width,
+    int y, int x, _string_t contents, int ssize) {
     WINDOW *pad;
-
-    _string_t line = NULL;
-    size_t n = 0;
     int getch_key, pad_row = 0;
 
     /* ... pad with 'ssize' area. */
     if ((pad = newpad(ssize, width)) == NULL)
         return ERR;
 
-    FILE *fp = fopen(filename, "r");
-
-    if (fp != NULL) {
-        while (getline(&line, &n, fp) != -1)
-            wprintw(pad, "%s", line);
-
-        fclose(fp);
-
-        if (line != NULL)
-            free(line);
-    } else
-        wprintw(pad, "Err. '%s'\n", filename);
+    wprintw(pad, "%s", contents);
 
     keypad(pad, TRUE);
 
@@ -99,6 +85,35 @@ int open_textfile(int height, int width,
 
     delwin(pad);
     return OK;
+}
+
+int open_textfile(int height, int width,
+    int y, int x, const char *filename, int ssize) {
+
+    int ret = -1;
+    _string_t tmp = NULL;
+    FILE *fp = fopen(filename, "r");
+
+    if (fp != NULL) {
+        fseek(fp, 0, SEEK_END);
+        long numbytes = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        if ((tmp = malloc(numbytes + 1)) != NULL &&
+            fread(tmp, 1, numbytes, fp) == numbytes) {
+
+            tmp[numbytes] = '\0';
+            ret = 0;
+        }
+
+        fclose(fp);
+    }
+
+    if (__open_newpad(height, width, y, x, tmp, ssize) == ERR)
+        ret = -1;
+
+    free(tmp);
+    return ret;
 }
 
 static WINDOW *__popup, *__message;

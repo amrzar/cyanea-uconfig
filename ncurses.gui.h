@@ -36,6 +36,7 @@
 #define DISABLE_COLOR_ATTR COLOR_PAIR(2)
 
 extern int wattrpr(WINDOW *, int, int, const char *);
+extern int __open_newpad(int, int, int, int, _string_t, int);
 extern int open_textfile(int, int, int, int, const char *, int);
 extern int open_message_box(int, int, int, int, const char *, const char *[]);
 extern _string_t open_input_box(int, int, int, int, const char *, const char *, _string_t, const char *);
@@ -44,11 +45,11 @@ extern int open_radio_box(int, int, int, int, const char *, _string_t[], int, in
 #define INPUT_BOX(h, prompt, def, regex)        \
     open_input_box(MAIN_MENU_HIGH,              \
         SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,  \
-        "", prompt, def, regex)
+        h, prompt, def, regex)
 
 #define RADIO_BOX(h, choices, n, sel, size)     \
     open_radio_box(MAIN_MENU_HIGH,              \
         SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,  \
-        "", choices, n, sel, size)
+        h, choices, n, sel, size)
 
 #endif /* __NCURSES_GUI_H__ */
