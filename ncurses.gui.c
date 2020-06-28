@@ -169,6 +169,7 @@ static void draw_main_menu(const char *menu_title,
 #define SPECIAL_KEY_Q   -2  /* ... 'Q' pressed. */
 #define SPECIAL_KEY_H   -3  /* ... 'H' pressed. */
 #define SPECIAL_KEY_RT  -4  /* ... 'Retuen' pressed. */
+#define SPECIAL_KEY_F1  -5  /* ... 'F1' pressed. */
 
 static int __selected_row = 0;
 static int main_menu_driver(const char *menu_title, config_t choices[]) {
@@ -215,6 +216,9 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
 
             if (getch_key == 'h')
                 return SPECIAL_KEY_H;
+
+            if (getch_key == KEY_F(1))
+                return SPECIAL_KEY_F1;
 
         } else {
             clear();
@@ -402,6 +406,12 @@ int start_gui(int nr_pages) {
                     "No help provided." : item->common.help, 150);
             }
 
+            break;
+
+        case SPECIAL_KEY_F1:
+            open_textfile(__MAIN_MENU_HIGH, SCREEN_WIDTH,
+                /* ... 'README.md' is inside the '_IN_FOLDER' folder. */
+                TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
             break;
 
         default: /* process 'SPECIAL_KEY_RT' */
