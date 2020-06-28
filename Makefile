@@ -57,7 +57,8 @@ style:
 	--pad-comma \
 	--pad-header \
 	--align-pointer=name \
-	--break-one-line-headers \$(SOURCES) \
+	--break-one-line-headers \
+	$(SOURCES) \
 		config.db.h config.parser.h config.utils.h ncurses.gui.h
 
 clean:
