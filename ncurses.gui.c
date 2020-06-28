@@ -168,16 +168,18 @@ static void draw_main_menu(const char *menu_title,
 #define SPECIAL_KEY_BS  -1  /* ... 'Backspace' pressed. */
 #define SPECIAL_KEY_Q   -2  /* ... 'Q' pressed. */
 #define SPECIAL_KEY_H   -3  /* ... 'H' pressed. */
-static int main_menu_driver(const char *menu_title,
-    config_t choices[], int selected_row) {
+#define SPECIAL_KEY_RT  -4  /* ... 'Retuen' pressed. */
+
+static int __selected_row = 0;
+static int main_menu_driver(const char *menu_title, config_t choices[]) {
     int choice_start = 0;
     int max_row = 0, getch_key = 0;
 
     while (choices[max_row].private != NULL)
         max_row++;
 
-    if (selected_row >= max_row)
-        selected_row = 0;
+    if (__selected_row >= max_row)
+        __selected_row = 0;
 
     keypad(main_screen, TRUE);
 
@@ -185,24 +187,24 @@ static int main_menu_driver(const char *menu_title,
         if (COLS > TERMINAL_COLS && LINES > TERMINAL_LINES) {
 
             if (getch_key == KEY_UP) {
-                if (selected_row > 0)
-                    selected_row--;
+                if (__selected_row > 0)
+                    __selected_row--;
 
-                if (selected_row < choice_start &&
+                if (__selected_row < choice_start &&
                     choice_start > 0)
                     choice_start--;
             }
 
             if (getch_key == KEY_DOWN) {
-                if (selected_row < max_row - 1) {
-                    selected_row++;
+                if (__selected_row < max_row - 1) {
+                    __selected_row++;
 
-                    if (selected_row - choice_start >= MAIN_MENU_HIGH)
+                    if (__selected_row - choice_start >= MAIN_MENU_HIGH)
                         choice_start++;
                 }
             }
 
-            draw_main_menu(menu_title, choices, selected_row, choice_start);
+            draw_main_menu(menu_title, choices, __selected_row, choice_start);
 
             /* ... process special keys. */
             if (getch_key == KEY_BACKSPACE)
@@ -226,7 +228,7 @@ static int main_menu_driver(const char *menu_title,
 
     keypad(main_screen, FALSE);
 
-    return selected_row;
+    return SPECIAL_KEY_RT;
 }
 
 #define __realloc(_s, _n, _sz) ({                       \
@@ -314,7 +316,7 @@ static int __open_radio_item(item_t *item) {
             selected = num - 1;
     }
 
-    in = RADIO_BOX(item->common.help, choices, num, selected,
+    in = RADIO_BOX("", choices, num, selected,
             (num > 5) ? 5 : num);
 
     if (in != -1)
@@ -324,10 +326,10 @@ static int __open_radio_item(item_t *item) {
     return 0;
 }
 
+#define cur_config config[__selected_row]
 int start_gui(int nr_pages) {
-    int k, ret = 0;
-    int choice = 0, index = 0;
-    config_t *curr_config;
+    int k, ret = 0, index = 0;
+    config_t *config;
 
     /* ... allocate stack for traversing menu. */
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
@@ -336,18 +338,16 @@ int start_gui(int nr_pages) {
     __init_ncurses();
 
     while (1) {
-        curr_config = menu_to_config_struct(pages[index]);
+        config = menu_to_config_struct(pages[index]);
 
-        if (curr_config == NULL) {
+        if (config == NULL) {
             ret = -2;
             break;
         }
 
         k = main_menu_driver((pages[index]->prompt == NULL) ?
-
-            /* ... menu title: 'Options' as main title. */
-            "Options" : pages[index]->prompt,
-            curr_config, choice);
+                /* ... menu title: 'Options' as main title. */
+                "Options" : pages[index]->prompt, config);
 
         switch (k) {
         case SPECIAL_KEY_BS:
@@ -394,28 +394,32 @@ int start_gui(int nr_pages) {
             break;
 
         case SPECIAL_KEY_H:
-            open_textfile(__MAIN_MENU_HIGH, SCREEN_WIDTH,
-                TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
+            if (cur_config.t != CONF_MENU) {
+                item_t *item = (item_t *)cur_config.private;
+
+                __open_newpad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
+                    TITLE_HIGH, MARGIN_LEFT, (item->common.help == NULL) ?
+                    "No help provided." : item->common.help, 150);
+            }
+
             break;
 
-        default:
-            choice = k; /* ... 'k' is not special key. */
+        default: /* process 'SPECIAL_KEY_RT' */
+            if (cur_config.t == CONF_MENU)
+                pages[++index] = cur_config.private;
 
-            if (curr_config[choice].t == CONF_MENU)
-                pages[++index] = curr_config[choice].private;
+            else if (cur_config.t == CONF_YES)
+                toggle_config(cur_config.private);
 
-            else if (curr_config[choice].t == CONF_YES)
-                toggle_config(curr_config[choice].private);
+            else if (cur_config.t == CONF_NO)
+                toggle_config(cur_config.private);
 
-            else if (curr_config[choice].t == CONF_NO)
-                toggle_config(curr_config[choice].private);
-
-            else if (curr_config[choice].t == CONF_INPUT) {
+            else if (cur_config.t == CONF_INPUT) {
                 item_t *item;
                 _extended_token_t etoken;
                 _string_t in;
 
-                item = (item_t *)curr_config[choice].private;
+                item = (item_t *)cur_config.private;
                 etoken = item_token_list_head_entry(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
@@ -423,27 +427,26 @@ int start_gui(int nr_pages) {
                     snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
 
                     /* ... regex: accept only numeric. */
-                    in = INPUT_BOX(item->common.help,
-                            item->common.prompt, tmp, "^[0-9]* *$");
+                    in = INPUT_BOX("", item->common.prompt, tmp, "^[0-9]* *$");
 
                     if (in != NULL)
                         toggle_config(item, atoi(in));
 
                     free(in);
                 } else { /* and TT_DESCRIPTION. */
-                    in = INPUT_BOX(item->common.help, item->common.prompt,
+                    in = INPUT_BOX("", item->common.prompt,
                             etoken->token.TK_STRING, "^\"[^\"]*\" *$");
 
                     if (in != NULL)
                         toggle_config(item, in);
                 }
             } else /* and 'CONF_RADIO'. */
-                __open_radio_item(curr_config[choice].private);
+                __open_radio_item(cur_config.private);
         }
     }
 
 end_gui:
-    free(curr_config);
+    free(config);
     free(pages);
 
     clear();
