@@ -122,7 +122,10 @@ static inline int build_autoconfig(const char *filename) {
     if ((fp = fopen(filename, "w+")) == NULL)
         return -1;
 
+    fprintf(fp, "#ifndef __UCONFIG_H\n");
+    fprintf(fp, "#define __UCONFIG_H\n");
     __fprintf_menu(fp, MAINMENU);
+    fprintf(fp, "#endif /* __UCONFIG_H */\n");
     fclose(fp);
 
     return SUCCESS;
