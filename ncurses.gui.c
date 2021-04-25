@@ -220,14 +220,16 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
             if (getch_key == KEY_F(1))
                 return SPECIAL_KEY_F1;
 
+            /* ... also refresh 'main_screen', here. */
+            getch_key = getch();
+
         } else {
             clear();
             mvwprintw(main_screen, 0, 0, "%s",
                 "Terminal is too small...");
+            /* ... ignore the input. */
+            getch();
         }
-
-        /* ... also refresh 'main_screen', here. */
-        getch_key = getch();
     }
 
     keypad(main_screen, FALSE);
