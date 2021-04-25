@@ -19,7 +19,7 @@
 #include "config.db.h"
 
 #define TERMINAL_LINES 30
-#define TERMINAL_COLS 80
+#define TERMINAL_COLS 100
 
 #define TITLE_LINE 2    /* ... index of screen's title line. */
 #define TITLE_HIGH 6    /* ... number of lines in title section. */
