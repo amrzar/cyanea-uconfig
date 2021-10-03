@@ -192,7 +192,3 @@ stmt_include: INCLUDE TT_DESCRIPTION
 };
 
 %%
-
-void yyerror(char *s) {
-	fprintf(stderr, "yyerror: %s\n", s);
-}

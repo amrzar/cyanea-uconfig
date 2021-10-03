@@ -28,7 +28,7 @@ lex.yy.c: config.parser.l
 
 config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
 	$(Q)echo "LD $@"
-	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -o $@
+	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -ly -o $@
 
 %.o: %.c
 	$(Q)echo "CC $<"

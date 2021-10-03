@@ -6,5 +6,5 @@ The configuration system implemented from scratch for Cyanea ukernel
 
 ## Depends on
 
-`sudo apt-get install bison flex libncurses-dev astyle`
+`sudo apt-get install bison libbison-dev flex libncurses-dev astyle`
 
