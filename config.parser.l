@@ -62,8 +62,9 @@ extern void yyerror(char *s);
 	return TT_SYMBOL;
 }
 
-["]([^".]|[\.\n])*["] {
-	yylval.token.TK_STRING = strdup(yytext);
+\"[^\"]*\" {
+	yylval.token.TK_STRING = strdup(yytext + 1); /* skip open quote  */
+	yylval.token.TK_STRING[yyleng - 2] = '\0'; /* remove close quote */
 	yylval.token.ttype = TT_DESCRIPTION;
 	return TT_DESCRIPTION;
 }

@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         _extended_token_t etoken = token_list_entry_info(tp);
         config_files = config_files->next; /* ... move next. */
 
-        if (yy_parse_file(UNQUOT(etoken->token.TK_STRING)) != 0)
+        if (yy_parse_file(etoken->token.TK_STRING) != 0)
             return -1;
 
         free_etoken(etoken);

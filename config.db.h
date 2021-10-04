@@ -42,19 +42,10 @@ struct entry {
     _string_t help;     /* ... help statements. */
 };
 
-#define UNQUOT(_s) ({                               \
-        int i;                                      \
-        if ((_s) != NULL) {                         \
-            for (i = 0; (_s)[i + 1] != '"'; i++)    \
-                (_s)[i] = (_s)[i + 1];              \
-            (_s)[i] = '\0';                         \
-        } (_s);                                     \
-    })
-
 static inline int __init_entry(struct entry *entry,
     token_t prompt, token_t symbol,
     token_t help, _expr_t expr) {
-    entry->prompt = UNQUOT(prompt.TK_STRING);
+    entry->prompt = prompt.TK_STRING;
     entry->symbol = symbol.TK_STRING;
     entry->dependancy = expr;
     entry->help = help.TK_STRING;
