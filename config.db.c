@@ -116,22 +116,27 @@ int pop_menu(void) {
 _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
     va_list valist;
     _extended_token_t etoken;
+    _token_list_t token = NULL;
 
     va_start(valist, flags);
 
     if ((etoken = malloc(sizeof(struct extended_token))) != NULL) {
         etoken->flags = flags;
 
+        /* TODO 'flags' may be 'TK_LIST_EF_CONDITIONAL'.
+         * Variable token list must be stored separately and evaluated
+         * when processing an item. */
+
         if (flags == TK_LIST_EF_NULL ||
             flags & TK_LIST_EF_DEFAULT)
             etoken->token = va_arg(valist, token_t);
 
-        return token_list_add(&etoken->node, token1);
+        token = token_list_add(&etoken->node, token1);
     }
 
     va_end(valist);
 
-    return NULL;
+    return token;
 }
 
 void free_etoken(_extended_token_t e) {

@@ -68,6 +68,7 @@ static inline int __init_entry(struct entry *entry,
 #define __TK_LIST_EF_CONFIG \
     (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT)
 #define TK_LIST_EF_SELECTED 4
+#define TK_LIST_EF_CONDITIONAL 8
 
 struct extended_token {
     unsigned long flags;
