@@ -5,8 +5,6 @@
 #include "config.parser.h"
 #include "y.tab.h"
 
-extern void yyerror(char *s);
-
 %}
 
 ws				[ \t\n]+
@@ -86,13 +84,8 @@ int yy_parse_file(const char *filename) {
     }
 
     yyset_in(filep);
-
-    int ret = 0;
-
-    if ((ret = yyparse()) != 0)
-        fprintf(stderr, "yacc failed with %d\n", ret);
+    int ret = yyparse();
 
     fclose(filep);
-
     return ret;
 }
