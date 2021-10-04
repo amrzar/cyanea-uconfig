@@ -149,6 +149,18 @@ void free_etoken(_extended_token_t e) {
     free(e);
 }
 
+static inline int init_entry(struct entry *entry,
+    token_t prompt, token_t symbol,
+    token_t help, _expr_t expr) {
+
+    entry->prompt = prompt.TK_STRING;
+    entry->symbol = symbol.TK_STRING;
+    entry->dependancy = expr;
+    entry->help = help.TK_STRING;
+
+    return SUCCESS;
+}
+
 int add_new_config_entry(token_t token1, token_t token2,
     token_t token3, _token_list_t token4,
     _expr_t expr, token_t token5) {
@@ -162,8 +174,7 @@ int add_new_config_entry(token_t token1, token_t token2,
         init_list_head(&item->list);
         init_hlist_node(&item->hnode);
 
-        if (__init_entry(&item->common, token1,
-                token2, token5, expr) == -1)
+        if (init_entry(&item->common, token1, token2, token5, expr) == -1)
             return -1;
 
         /* ... store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
@@ -192,8 +203,7 @@ int add_new_choice_entry(token_t token1, token_t token2,
         init_list_head(&item->list);
         init_hlist_node(&item->hnode);
 
-        if (__init_entry(&item->common, token1,
-                token2, token4, expr) == -1)
+        if (init_entry(&item->common, token1, token2, token4, expr) == -1)
             return -1;
 
         item->tk_list = token3;
