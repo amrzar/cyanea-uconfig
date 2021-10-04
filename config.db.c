@@ -83,7 +83,9 @@ static token_t hash_get_token(_string_t symbol) {
         }
     }
 
-    return TOKEN_INVALID;
+    return (token_t) {
+        .ttype = TT_INVALID
+    };
 }
 
 int push_menu(token_t token, _expr_t expr) {

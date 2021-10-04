@@ -36,12 +36,6 @@ typedef struct {
 #define TK_INTEGER info.n
 #define TK_STRING info.s
 
-#define TOKEN_INVALID (token_t) \
-    { .ttype = TT_INVALID }
-
-#define NULLDESC (token_t)      \
-    { .ttype = TT_DESCRIPTION, .TK_STRING = NULL }
-
 enum expr_op {
     OP_NULL = 1,
     OP_EQUAL,

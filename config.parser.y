@@ -18,6 +18,11 @@ int yydebug = 1;
 	(_tmp); 					\
 })
 
+#define NULLDESC (token_t) { 	\
+	.ttype = TT_DESCRIPTION, 	\
+	.TK_STRING = NULL 			\
+}
+
 %}
 
 %union 
