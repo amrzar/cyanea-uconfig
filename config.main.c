@@ -18,6 +18,7 @@
 
 #include "config.db.h"
 
+extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
 
 void print_help(char *pname) {

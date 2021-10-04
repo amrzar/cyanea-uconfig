@@ -160,6 +160,5 @@ static inline void toggle_choice(item_t *item, _string_t n) {
 }
 
 extern void toggle_config(item_t *, ...);
-extern int start_gui(int);
 
 #endif /* __CONFIG_DB_H__ */
