@@ -14,7 +14,7 @@
  #
 
 DEPS = $(wildcard *.d)
-SOURCES = config.db.c config.main.c ncurses.utils.c ncurses.gui.c
+SOURCES = config.db.c main.c ncurses.utils.c gui.c
 
 -include $(DEPS)
 
