@@ -594,13 +594,23 @@ int read_config_file(const char *filename) {
                 _extended_token_t etoken = token_list_entry_info(tp);
 
                 if (etoken->flags & TK_LIST_EF_CONFIG) {
-                    if (etoken->token.ttype == TT_BOOL) {
+                    /* ... 'TK_LIST_EF_DEFAULT' is always set. */
 
+                    if (etoken->token.ttype == TT_BOOL) {
                         int tmp = strncmp(value, "true", 4);
 
                         if (etoken->token.TK_BOOL == true) {
+
+                            /* Here, 'refcount' represents number of times other
+                             * configuration items selected this item, e.g. refcount == 2
+                             * means this item has been selected 2 times so far.
+                             *
+                             * We only change 'TK_BOOL' to false if 'refcount' is zero.
+                             * As 'TK_LIST_EF_DEFAULT' is set, i.e. it has not been processed before in
+                             * this function, changing to false does not case any changes
+                             * to other configuration items. */
+
                             if (tmp != 0) {
-                                /* if changing to false ... */
                                 if (item->refcount > 0)
                                     item_dec(item);
                                 else
