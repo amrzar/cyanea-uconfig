@@ -29,12 +29,12 @@ typedef struct {
         bool b;
         int n;
         _string_t s;
-    } piggy;
+    } info;
 } token_t;
 
-#define TK_BOOL piggy.b
-#define TK_INTEGER piggy.n
-#define TK_STRING piggy.s
+#define TK_BOOL info.b
+#define TK_INTEGER info.n
+#define TK_STRING info.s
 
 #define TOKEN_INVALID (token_t) \
     { .ttype = TT_INVALID }
@@ -54,11 +54,10 @@ enum expr_op {
 struct expr {
     enum expr_op op;
     struct {
-        union __e {
+        union {
             token_t token;
             struct expr *expr;
-        } up;
-        union __e down;
+        } up, down;
     } node;
 };
 
