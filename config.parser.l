@@ -9,6 +9,12 @@ extern void yyerror(char *s);
 
 %}
 
+ws				[ \t\n]+
+comment			#.*
+qstring			\"[^\"]*\"
+symbol			[A-Z0-9][A-Z0-9_]+
+integer			([0-9]|[1-9][0-9]+)
+
 %%
 
 "menu"			{ return MENU; }
@@ -34,8 +40,8 @@ extern void yyerror(char *s);
 "=="			{ return EQUAL; }
 "!="			{ return NEQUAL; }
 
-#.* /* ... ignore comments. */ ;
-[ \t\n]+ /* ... ignore white spaces. */	;
+{comment}	; /* ... ignore comments. */ ;
+{ws} 		; /* ... ignore white spaces. */	;
 
 (true|false) {
 	yylval.token.TK_BOOL = 
@@ -44,25 +50,19 @@ extern void yyerror(char *s);
 	return TT_BOOL;
 }
 
-[1-9][0-9]+ {
+{integer} {
 	yylval.token.TK_INTEGER = atoi(yytext);
 	yylval.token.ttype = TT_INTEGER;
 	return TT_INTEGER;
 }
 
-[0-9] {
-	yylval.token.TK_INTEGER = atoi(yytext);
-	yylval.token.ttype = TT_INTEGER;
-	return TT_INTEGER;
-}
-
-[A-Z0-9][A-Z0-9_]+ {
+{symbol} {
 	yylval.token.TK_STRING = strdup(yytext);
 	yylval.token.ttype = TT_SYMBOL;
 	return TT_SYMBOL;
 }
 
-\"[^\"]*\" {
+{qstring} {
 	yylval.token.TK_STRING = strdup(yytext + 1); /* skip open quote  */
 	yylval.token.TK_STRING[yyleng - 2] = '\0'; /* remove close quote */
 	yylval.token.ttype = TT_DESCRIPTION;
