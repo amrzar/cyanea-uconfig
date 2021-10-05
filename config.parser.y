@@ -6,9 +6,18 @@
 extern void yyerror(char *s);
 extern int yylex (void);
 
-#ifdef DEBUG
-int yydebug = 1;
-#endif
+extern int push_menu(token_t, _expr_t);
+extern int pop_menu(void);
+
+extern _expr_t expr_op_symbol_one(enum expr_op, token_t);
+extern _expr_t expr_op_symbol_two(enum expr_op, token_t, token_t);
+extern _expr_t expr_op_expr_one(enum expr_op, _expr_t);
+extern _expr_t expr_op_expr_two(enum expr_op, _expr_t, _expr_t);
+extern _token_list_t next_token(_token_list_t, unsigned long, ...);
+
+extern int add_new_config_entry(token_t, token_t, token_t, _token_list_t, _expr_t, token_t);
+extern int add_new_choice_entry(token_t, token_t, _token_list_t, _expr_t, token_t);
+extern int add_new_config_file(token_t);
 
 #define YYTEST(_f, ...) ({ 				\
 	void *_tmp = (_f)(__VA_ARGS__);		\

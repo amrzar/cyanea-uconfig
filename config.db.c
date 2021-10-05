@@ -21,6 +21,8 @@
 #include "config.db.h"
 #include "y.tab.h"
 
+#define SYMTABLE 256
+
 menu_t mainmenu = {
     NULL,
     NULL, /* ... always true. */
@@ -75,7 +77,7 @@ static token_t hash_get_token(_string_t symbol) {
 
     if ((item = hash_get_item(symbol)) != NULL) {
         item_token_list_for_each(tp, item) {
-            _extended_token_t etoken = token_list_entry_info(tp);
+            _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
             if (etoken->flags & /* ... config or selected token. */
                 (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED))
@@ -178,7 +180,8 @@ int add_new_config_entry(token_t token1, token_t token2,
             return -1;
 
         /* ... store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
-        if ((item->tk_list = next_token(token4, __TK_LIST_EF_CONFIG, token3)) == NULL)
+        if ((item->tk_list = next_token(token4,
+                        (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT), token3)) == NULL)
             return -1;
 
         item->refcount = 0;
@@ -306,7 +309,7 @@ static bool __eval_expr(token_t token1,
             return (strcmp(token1.TK_STRING,
                         token2.TK_STRING) == 0);
 
-        if (op == OP_EQUAL)
+        if (op == OP_NEQUAL)
             return (strcmp(token1.TK_STRING,
                         token2.TK_STRING) != 0);
 
@@ -410,7 +413,7 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
 
                 _token_list_t tp;
                 item_token_list_for_each(tp, item) {
-                    _extended_token_t etoken = token_list_entry_info(tp);
+                    _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
                     if (etoken->flags &
                         (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
@@ -460,7 +463,7 @@ int __populate_config_file(const char *filename, unsigned long flags) {
             fprintf(fp, "%s ", item->common.symbol);
 
             item_token_list_for_each(tp, item) {
-                _extended_token_t etoken = token_list_entry_info(tp);
+                _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
                 if (etoken->flags & flags) {
                     if (etoken->token.ttype == TT_BOOL)
@@ -492,7 +495,7 @@ static void update_select_token_list(_token_list_t head, bool n) {
     _token_list_t tp;
 
     token_list_for_each(tp, head) { /* ... handle selects, if any. */
-        _extended_token_t e, etoken = token_list_entry_info(tp);
+        _extended_token_t e, etoken = container_of(tp, struct extended_token, node);
 
         if ((item = hash_get_item(etoken->token.TK_STRING)) != NULL) {
 
@@ -591,7 +594,7 @@ int read_config_file(const char *filename) {
 
         if ((item = hash_get_item(symbol)) != NULL) {
             item_token_list_for_each(tp, item) {
-                _extended_token_t etoken = token_list_entry_info(tp);
+                _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
                 if (etoken->flags & TK_LIST_EF_CONFIG) {
                     /* ... 'TK_LIST_EF_DEFAULT' is always set. */

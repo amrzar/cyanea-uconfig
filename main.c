@@ -20,6 +20,7 @@
 
 extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
+extern void init_symbol_hash_table(void);
 
 void print_help(char *pname) {
     printf("\nUse: %s [OPTIONS]\n", pname);
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
     _token_list_t tp;
 
     while ((tp = config_files) != NULL) {
-        _extended_token_t etoken = token_list_entry_info(tp);
+        _extended_token_t etoken = container_of(tp, struct extended_token, node);
         config_files = config_files->next; /* ... move next. */
 
         if (yy_parse_file(etoken->token.TK_STRING) != 0)

@@ -30,7 +30,6 @@ typedef struct menu {
     struct list_head childs, sibling;
 } menu_t;
 
-/* ... parser output. */
 extern menu_t mainmenu;
 #define MAINMENU (&mainmenu)
 extern _token_list_t config_files;
@@ -45,58 +44,45 @@ struct entry {
 #define TK_LIST_EF_NULL 0
 #define TK_LIST_EF_DEFAULT 1
 #define TK_LIST_EF_CONFIG 2
-#define __TK_LIST_EF_CONFIG \
-    (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT)
 #define TK_LIST_EF_SELECTED 4
 #define TK_LIST_EF_CONDITIONAL 8
 
-struct extended_token {
+typedef struct extended_token {
     unsigned long flags;
     token_t token;
 
     struct token_list node;
-};
+} *_extended_token_t;
 
-typedef struct extended_token *_extended_token_t;
-
-/* ... 'next_token' is called for every item's token. */
-extern _token_list_t next_token(_token_list_t, unsigned long, ...);
 extern void free_etoken(_extended_token_t);
 
 typedef struct item {
     struct entry common;
 
-    /* ... records times an item refrenced. */
+    unsigned long refcount;
 #define item_inc(_i) (_i)->refcount++
 #define item_dec(_i) (_i)->refcount--
-    unsigned long refcount;
 
-#define item_token_list_head_entry(_i)              \
-    token_list_entry_info((_i)->tk_list)
-#define item_token_list_for_each(pos, _i)           \
-    token_list_for_each(pos, (_i)->tk_list)
+    /* */
     _token_list_t tk_list;
 
     struct list_head list;
     struct hlist_node hnode;
 } item_t;
 
-#define token_list_entry_info(_t)                   \
-    container_of((_t), struct extended_token, node);
+#define item_token_list_head_entry(_i)                      \
+    container_of((_i)->tk_list, struct extended_token, node)
+#define item_token_list_for_each(pos, _i)                   \
+    token_list_for_each(pos, (_i)->tk_list)
 
-#define SYMTABLE 256
-extern void init_symbol_hash_table(void);
 extern int __populate_config_file(const char *, unsigned long);
-
-#define create_config_file(file)                    \
-    __populate_config_file((file), TK_LIST_EF_DEFAULT)
-
-#define write_config_file(file)                     \
-    __populate_config_file((file), TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
+#define create_config_file(_f) __populate_config_file((_f), TK_LIST_EF_DEFAULT)
+#define write_config_file(_f) __populate_config_file((_f),  \
+    TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
 
 extern int read_config_file(const char *);
-extern void __fprintf_menu(FILE *, menu_t *);
 
+extern void __fprintf_menu(FILE *, menu_t *);
 static inline int build_autoconfig(const char *filename) {
     FILE *fp;
 
@@ -112,26 +98,12 @@ static inline int build_autoconfig(const char *filename) {
     return SUCCESS;
 }
 
-extern int push_menu(token_t, _expr_t);
-extern int add_new_config_entry(token_t, token_t, token_t,
-    _token_list_t, _expr_t, token_t);
-extern int add_new_choice_entry(token_t, token_t,
-    _token_list_t, _expr_t, token_t);
-extern int add_new_config_file(token_t);
-extern int pop_menu(void);
-
-extern _expr_t expr_op_symbol_one(enum expr_op, token_t);
-extern _expr_t expr_op_symbol_two(enum expr_op, token_t, token_t);
-extern _expr_t expr_op_expr_one(enum expr_op, _expr_t);
-extern _expr_t expr_op_expr_two(enum expr_op, _expr_t, _expr_t);
-extern bool eval_expr(_expr_t);
-
 extern void __toggle_choice(_extended_token_t, _string_t);
 static inline void toggle_choice(item_t *item, _string_t n) {
     _token_list_t tp;
 
     item_token_list_for_each(tp, item) {
-        _extended_token_t etoken = token_list_entry_info(tp);
+        _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
         /* ... remove 'TK_LIST_EF_SELECTED', first. */
         etoken->flags &= ~TK_LIST_EF_SELECTED;
@@ -140,5 +112,6 @@ static inline void toggle_choice(item_t *item, _string_t n) {
 }
 
 extern void toggle_config(item_t *, ...);
+extern bool eval_expr(_expr_t);
 
 #endif /* __CONFIG_DB_H__ */

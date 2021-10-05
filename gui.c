@@ -306,7 +306,7 @@ static int __open_radio_item(item_t *item) {
     _string_t *choices = NULL;
 
     item_token_list_for_each(tp, item) {
-        _extended_token_t etoken = token_list_entry_info(tp);
+        _extended_token_t etoken = container_of(tp, struct extended_token, node);
 
         if ((choices = relloc_str(choices, ++num)) == NULL)
             return -1;
