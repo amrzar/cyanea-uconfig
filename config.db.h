@@ -70,14 +70,18 @@ typedef struct item {
     struct hlist_node hnode;
 } item_t;
 
-#define item_token_list_head_entry(_i)                      \
-    container_of((_i)->tk_list, struct extended_token, node)
-#define item_token_list_for_each(pos, _i)                   \
+#define item_token_list_for_each(pos, _i)                       \
     token_list_for_each(pos, (_i)->tk_list)
+
+#define item_get_config_etoken(_i) ({                           \
+        _extended_token_t etoken = container_of((_i)->tk_list,  \
+                struct extended_token, node);                   \
+        (etoken->flags & TK_LIST_EF_CONFIG) ? etoken : NULL;    \
+    })
 
 extern int __populate_config_file(const char *, unsigned long);
 #define create_config_file(_f) __populate_config_file((_f), TK_LIST_EF_DEFAULT)
-#define write_config_file(_f) __populate_config_file((_f),  \
+#define write_config_file(_f) __populate_config_file((_f),      \
     TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
 
 extern int read_config_file(const char *);

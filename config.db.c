@@ -334,10 +334,7 @@ bool eval_expr(_expr_t expr) {
     switch (expr->op) {
     case OP_NULL:
         if ((item = hash_get_item(expr->NODE.token.TK_STRING)) != NULL) {
-            etoken = item_token_list_head_entry(item);
-
-            /* ... make sure it is a config item. */
-            if ((etoken->flags & TK_LIST_EF_CONFIG) &&
+            if (((etoken = item_get_config_etoken(item)) != NULL) &&
                 (etoken->token.ttype == TT_BOOL)) {
                 return etoken->token.TK_BOOL;
             }
@@ -499,11 +496,8 @@ static void update_select_token_list(_token_list_t head, bool n) {
 
         if ((item = hash_get_item(etoken->token.TK_STRING)) != NULL) {
 
-            e = item_token_list_head_entry(item);
-
-            if ((e->flags & TK_LIST_EF_CONFIG) &&
+            if (((e = item_get_config_etoken(item)) != NULL) &&
                 (e->token.ttype == TT_BOOL)) {
-
                 if (n == true) {
                     if (e->flags & TK_LIST_EF_DEFAULT ||
                         e->token.TK_BOOL == true)
@@ -547,7 +541,7 @@ void toggle_config(item_t *item, ...) {
     _extended_token_t etoken;
 
     va_start(valist, item);
-    etoken = item_token_list_head_entry(item);
+    etoken = item_get_config_etoken(item);
 
     /* ... sure 'TK_LIST_EF_CONFIG' is set. */
     if (etoken->token.ttype == TT_BOOL) {

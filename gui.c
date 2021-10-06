@@ -276,9 +276,7 @@ static config_t *menu_to_config_struct(menu_t *menu) {
 
             conf[num - 2].private = item;
 
-            etoken = item_token_list_head_entry(item);
-
-            if (etoken->flags & TK_LIST_EF_CONFIG) {
+            if ((etoken = item_get_config_etoken(item)) != NULL) {
                 if (etoken->token.ttype == TT_BOOL)
                     conf[num - 2].t = etoken->token.TK_BOOL ?
                         CONF_YES : CONF_NO;
@@ -433,7 +431,7 @@ int start_gui(int nr_pages) {
                 _string_t in;
 
                 item = (item_t *)cur_config.private;
-                etoken = item_token_list_head_entry(item);
+                etoken = item_get_config_etoken(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
