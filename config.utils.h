@@ -91,4 +91,7 @@ static inline void hlist_add_head(struct hlist_node *new,
     new->pprev = &head->first;
 }
 
+#define debug_print(...) fprintf(stderr, "[debug_print]" __VA_ARGS__)
+#define error_print(...) fprintf(stderr, "[error_print]" __VA_ARGS__)
+
 #endif /* __CONFIG_UTILS_H__ */

@@ -188,7 +188,7 @@ int add_new_config_entry(token_t token1, token_t token2,
         list_add_tail(&item->list, &curr_menu->entries);
 
         if (hash_add_item(item, token2.TK_STRING) == -1) {
-            fprintf(stderr, "... %s symbol exists.\n", token2.TK_STRING);
+            error_print("%s symbol exists.\n", token2.TK_STRING);
             return -1;
         }
 
@@ -213,7 +213,7 @@ int add_new_choice_entry(token_t token1, token_t token2,
         list_add_tail(&item->list, &curr_menu->entries);
 
         if (hash_add_item(item, token2.TK_STRING) == -1) {
-            fprintf(stderr, "... %s symbol exists.\n", token2.TK_STRING);
+            error_print("%s symbol exists.\n", token2.TK_STRING);
             return -1;
         }
 
@@ -316,7 +316,7 @@ static bool __eval_expr(token_t token1,
         break;
 
     default:
-        fprintf(stderr, "... unable to compute 'expr'.\n");
+        debug_print("unable to compute 'expr'.\n");
     }
 
     return false;
@@ -327,7 +327,7 @@ bool eval_expr(_expr_t expr) {
     _extended_token_t etoken;
     token_t token1, token2;
 
-    /* ... no 'depends' keyword. */
+    /* No 'depends' keyword, always success. */
     if (expr == NULL)
         return true;
 
@@ -340,7 +340,7 @@ bool eval_expr(_expr_t expr) {
             }
         }
 
-        fprintf(stderr, "... undefined or incompatible dependency: %s, assumed failed.\n",
+        debug_print("undefined or incompatible dependency: %s, assumed failed.\n",
             expr->NODE.token.TK_STRING);
         break;
 
@@ -354,8 +354,7 @@ bool eval_expr(_expr_t expr) {
             token1 = hash_get_token(token1.TK_STRING);
 
             if (token1.ttype == TT_INVALID) {
-                fprintf(stderr, "... undefined dependency: %s, assumed failed.\n",
-                    token1.TK_STRING);
+                debug_print("undefined dependency: %s, assumed failed.\n", token1.TK_STRING);
                 break;
             }
         }
@@ -364,14 +363,13 @@ bool eval_expr(_expr_t expr) {
             token2 = hash_get_token(token2.TK_STRING);
 
             if (token2.ttype == TT_INVALID) {
-                fprintf(stderr, "... undefined dependency: %s, assumed failed.\n",
-                    token2.TK_STRING);
+                debug_print("undefined dependency: %s, assumed failed.\n", token2.TK_STRING);
                 break;
             }
         }
 
         if (token1.ttype != token2.ttype) {
-            fprintf(stderr, "... tokens are incompatible.\n");
+            debug_print("tokens are incompatible.\n");
             break;
         }
 
@@ -400,7 +398,7 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
     item_t *item;
 
     if (eval_expr(menu->dependancy)) {
-        /* ...  handle childs, first. */
+        /* ... handle childs, first. */
         list_for_each_entry(m, &menu->childs, sibling) {
             __fprintf_menu(fp, m);
         }
@@ -415,6 +413,7 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
                     if (etoken->flags &
                         (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
                         if (etoken->token.ttype == TT_BOOL) {
+
                             /* ... assume 'false' as undefined symbol. */
                             if (etoken->token.TK_BOOL == true)
                                 fprintf(fp, "#define %s 1\n", item->common.symbol);
@@ -516,11 +515,11 @@ static void update_select_token_list(_token_list_t head, bool n) {
                     }
                 }
             } else
-                fprintf(stderr, "... incompatible select: %s, ignore.\n",
+                debug_print("incompatible select: %s, ignore.\n",
                     etoken->token.TK_STRING);
 
         } else
-            fprintf(stderr, "... undefined select: %s, ignore.\n",
+            debug_print("undefined select: %s, ignore.\n",
                 etoken->token.TK_STRING);
     }
 
@@ -640,7 +639,7 @@ int read_config_file(const char *filename) {
                     __toggle_choice(etoken, value);
             }
         } else
-            fprintf(stderr, "... undefined symbol: %s, ingnore.\n", symbol);
+            debug_print("undefined symbol: %s, ingnore.\n", symbol);
     }
 
     fclose(fp);
