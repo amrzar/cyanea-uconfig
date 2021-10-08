@@ -18,13 +18,9 @@
 #include "ncurses.gui.h"
 #include "y.tab.h"
 
-static const char screen_title[] = {
-    ".:%bCyanea ukernel%r Configuration:."
-};
-
+static const char screen_title[] = { SCREEN_TITLE };
 static const char *footnote_message[] = {
-    "Press [%bReturn%r] to select and [%bBackspace%r] to go back ...",
-    "Press [%bh%r] for help and [%bq%r] to exit.",
+    FOOTNOOTE_MESSAGE,
     NULL
 };
 
@@ -47,54 +43,39 @@ typedef struct {
 } config_t;
 
 static WINDOW *main_screen;
+#define screen_subwin(...) subwin(main_screen, __VA_ARGS__)
 static WINDOW *middle = NULL, *footnote = NULL;
-
-static inline void __init_ncurses(void) {
-    main_screen = initscr();
-
-    curs_set(0);
-    start_color();
-
-    cbreak();
-    noecho();
-    set_escdelay(0);
-
-    init_pair(1, COLOR_WHITE, COLOR_BLUE);
-    init_pair(2, COLOR_BLACK, COLOR_BLUE);
-}
 
 static int init_screen(void) {
     static int X = 0, Y = 0;
 
     if (X != COLS || Y != LINES) {
-        /* ... delete screen. */
         clear();
         delwin(middle);
         delwin(footnote);
 
-        middle = subwin(main_screen, __MAIN_MENU_HIGH,
-                SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT);
-
-        if (middle == NULL)
-            return ERR;
-
-        footnote = subwin(main_screen, FOOTNOTE_HIGH,
-                SCREEN_WIDTH, LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT);
-
-        if (footnote == NULL) {
-            delwin(middle);
-            return ERR;
+        if ((middle = screen_subwin(__MAIN_MENU_HIGH,
+                        SCREEN_WIDTH,
+                        TITLE_HIGH,
+                        MARGIN_LEFT)) == NULL ||
+            (footnote = screen_subwin(FOOTNOTE_HIGH,
+                        SCREEN_WIDTH,
+                        LINES - FOOTNOTE_HIGH - 1,
+                        MARGIN_LEFT)) == NULL) {
+            delwin(middle); /* ... ignore NULL. */
+            delwin(footnote);
+            return -1;
         }
 
         getmaxyx(main_screen, Y, X);
     }
 
-    return OK;
+    return SUCCESS;
 }
 
 static int draw_screen(void) {
-    if (init_screen() == ERR)
-        return ERR;
+    if (init_screen() != SUCCESS)
+        return -1;
 
     wborder(main_screen, 32, 32, 32, 32, 32, 32, 32, 32);
     wattrpr(main_screen, TITLE_LINE,
@@ -104,7 +85,7 @@ static int draw_screen(void) {
         footnote_message[i] != NULL; i++)
         wattrpr(footnote, i, 0, footnote_message[i]);
 
-    return OK;
+    return SUCCESS;
 }
 
 #define PROMPT_MENU(_e) ((menu_t *)(_e).private)->prompt
@@ -175,6 +156,7 @@ static int __selected_row = 0;
 static int main_menu_driver(const char *menu_title, config_t choices[]) {
     int choice_start = 0;
     int max_row = 0, getch_key = 0;
+    int pressed_key = SPECIAL_KEY_RT;
 
     while (choices[max_row].private != NULL)
         max_row++;
@@ -207,34 +189,42 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
 
             draw_main_menu(menu_title, choices, __selected_row, choice_start);
 
-            /* ... process special keys. */
-            if (getch_key == KEY_BACKSPACE)
-                return SPECIAL_KEY_BS;
+            /* Processing special keys ... */
 
-            if (getch_key == 'q')
-                return SPECIAL_KEY_Q;
+            if (getch_key == KEY_BACKSPACE) {
+                pressed_key = SPECIAL_KEY_BS;
+                break;
+            }
 
-            if (getch_key == 'h')
-                return SPECIAL_KEY_H;
+            if (getch_key == 'q') {
+                pressed_key = SPECIAL_KEY_Q;
+                break;
+            }
 
-            if (getch_key == KEY_F(1))
-                return SPECIAL_KEY_F1;
+            if (getch_key == 'h') {
+                pressed_key = SPECIAL_KEY_H;
+                break;
+            }
 
-            /* ... also refresh 'main_screen', here. */
+            if (getch_key == KEY_F(1)) {
+                pressed_key = SPECIAL_KEY_F1;
+                break;
+            }
+
+            /* Refresh 'main_screen', here. */
             getch_key = getch();
 
         } else {
             clear();
-            mvwprintw(main_screen, 0, 0, "%s",
-                "Terminal is too small...");
-            /* ... ignore the input. */
-            getch();
+            mvwprintw(main_screen, 0, 0, "%s", "Terminal is too small...");
+
+            getch(); /* ... ignore the input. */
         }
     }
 
     keypad(main_screen, FALSE);
 
-    return SPECIAL_KEY_RT;
+    return pressed_key;
 }
 
 #define __realloc(_s, _n, _sz) ({                       \
@@ -245,34 +235,41 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
     })
 
 #define relloc_conf(_c, _n) __realloc((_c), (_n), sizeof(config_t))
-static config_t *menu_to_config_struct(menu_t *menu) {
-    menu_t *m;
-    item_t *item;
+#define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(_string_t))
 
-    int num = 1;
+static config_t *menu_to_config_struct(menu_t *parent) {
     static int conf_size = 0;
     static config_t *conf = NULL;
 
-    list_for_each_entry(m, &menu->childs, sibling) {
-        if (eval_expr(m->dependancy)) {
+    menu_t *menu;
+    item_t *item;
+    int num = 1;
 
-            if (++num > conf_size)
+    /* First process child menus in this menu, i.e. 'parent' and then process
+     * other items. Reuse 'conf' as menu expands but never dellocate it. */
+
+    list_for_each_entry(menu, &parent->childs, sibling) {
+        if (eval_expr(menu->dependancy)) {
+
+            if (++num > conf_size) {
                 if ((conf = relloc_conf(conf, num)) == NULL)
                     return NULL;
+            }
 
-            conf[num - 2].private = m;
+            conf[num - 2].private = menu;
             conf[num - 2].t = CONF_MENU;
         }
     }
 
-    list_for_each_entry(item, &menu->entries, list) {
+    list_for_each_entry(item, &parent->entries, list) {
         if (item->common.prompt != NULL &&
             eval_expr(item->common.dependancy)) {
             _extended_token_t etoken;
 
-            if (++num > conf_size)
+            if (++num > conf_size) {
                 if ((conf = relloc_conf(conf, num)) == NULL)
                     return NULL;
+            }
 
             conf[num - 2].private = item;
 
@@ -287,7 +284,6 @@ static config_t *menu_to_config_struct(menu_t *menu) {
         }
     }
 
-    /* ... set terminating entry. */
     conf[num - 1].private = NULL;
 
     if (num > conf_size)
@@ -296,11 +292,10 @@ static config_t *menu_to_config_struct(menu_t *menu) {
     return conf;
 }
 
-#define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(_string_t))
-static int __open_radio_item(item_t *item) {
+static int open_radio_item(item_t *item) {
     _token_list_t tp;
 
-    int num = 0, in, selected = -1;
+    int num = 0, selected = -1;
     _string_t *choices = NULL;
 
     item_token_list_for_each(tp, item) {
@@ -320,29 +315,37 @@ static int __open_radio_item(item_t *item) {
             selected = num - 1;
     }
 
-    in = RADIO_BOX("", choices, num, selected,
-            (num > 5) ? 5 : num);
+    selected = screen_radio_box("", choices, num, selected, (num > 5) ? 5 : num);
 
-    if (in != -1)
-        toggle_choice(item, choices[in]);
+    if (selected != -1)
+        toggle_choice(item, choices[selected]);
 
     free(choices);
-    return 0;
+
+    return SUCCESS;
 }
 
 int start_gui(int nr_pages) {
-    int k, ret = 0, index = 0;
+    int pressed_key, ret = SUCCESS, index = 0;
 
 #define cur_config config[__selected_row]
     config_t *config;
 
-    /* ... allocate stack for traversing menu. */
+    main_screen = initscr();
+
+    curs_set(0);
+    start_color();
+    cbreak();
+    noecho();
+    set_escdelay(0);
+    init_pair(1, COLOR_WHITE, COLOR_BLUE);
+    init_pair(2, COLOR_BLACK, COLOR_BLUE);
+
+    /* ... maximum depth of 'nr_page'. */
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
     pages[index] = MAINMENU;
 
-    __init_ncurses();
-
-    while (1) {
+    while (TRUE) {
         config = menu_to_config_struct(pages[index]);
 
         if (config == NULL) {
@@ -350,11 +353,11 @@ int start_gui(int nr_pages) {
             break;
         }
 
-        k = main_menu_driver((pages[index]->prompt == NULL) ?
+        pressed_key = main_menu_driver((pages[index]->prompt == NULL) ?
                 /* ... menu title: 'Options' as main title. */
                 "Options" : pages[index]->prompt, config);
 
-        switch (k) {
+        switch (pressed_key) {
         case SPECIAL_KEY_BS:
             if (index > 0)
                 index--;
@@ -362,7 +365,7 @@ int start_gui(int nr_pages) {
             break;
 
         case SPECIAL_KEY_Q:
-            while (1) {
+            while (TRUE) {
                 static const char exit_message[] = {
                     "%bAre you sure?%r"
                 };
@@ -383,13 +386,10 @@ int start_gui(int nr_pages) {
                     goto end_gui;
                 }
 
-                else if (d == 'S' ||
-                    d == 's') {
-                    goto end_gui;
+                else if (d == 'S' || d == 's') {
+                    goto end_gui; /* ... return SUCCESS. */
 
-                } else if (d == 'C' ||
-                    d == 'c' ||
-                    d == 27)
+                } else if (d == 'C' || d == 'c' || d == 27)
                     break;
 
                 else if (d == KEY_RESIZE)
@@ -402,7 +402,7 @@ int start_gui(int nr_pages) {
             if (cur_config.t != CONF_MENU) {
                 item_t *item = (item_t *)cur_config.private;
 
-                __open_newpad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
+                open_newpad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
                     TITLE_HIGH, MARGIN_LEFT, (item->common.help == NULL) ?
                     "No help provided." : item->common.help, 150);
             }
@@ -412,10 +412,10 @@ int start_gui(int nr_pages) {
         case SPECIAL_KEY_F1:
             open_textfile(__MAIN_MENU_HIGH, SCREEN_WIDTH,
                 /* ... 'README.md' is inside the '_IN_FOLDER' folder. */
-                TITLE_HIGH, MARGIN_LEFT, "README.md", 150);
+                TITLE_HIGH, MARGIN_LEFT, "README.md");
             break;
 
-        default: /* process 'SPECIAL_KEY_RT' */
+        default: /* Process 'SPECIAL_KEY_RT' ... */
             if (cur_config.t == CONF_MENU)
                 pages[++index] = cur_config.private;
 
@@ -426,33 +426,33 @@ int start_gui(int nr_pages) {
                 toggle_config(cur_config.private);
 
             else if (cur_config.t == CONF_INPUT) {
-                item_t *item;
-                _extended_token_t etoken;
-                _string_t in;
+                _string_t input;
 
-                item = (item_t *)cur_config.private;
-                etoken = item_get_config_etoken(item);
+                item_t *item = (item_t *)cur_config.private;
+                _extended_token_t etoken = item_get_config_etoken(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
                     snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
 
                     /* ... regex: accept only numeric. */
-                    in = INPUT_BOX("", item->common.prompt, tmp, "^[0-9]* *$");
+                    input = screen_input_box("", item->common.prompt, tmp, "^[0-9]* *$");
 
-                    if (in != NULL)
-                        toggle_config(item, atoi(in));
+                    if (input != NULL) {
+                        toggle_config(item, atoi(input));
+                    }
 
-                    free(in);
+                    free(input);
                 } else { /* and TT_DESCRIPTION. */
-                    in = INPUT_BOX("", item->common.prompt,
+                    input = screen_input_box("", item->common.prompt,
                             etoken->token.TK_STRING, "^\"[^\"]*\" *$");
 
-                    if (in != NULL)
-                        toggle_config(item, in);
+                    if (input != NULL) {
+                        toggle_config(item, input);
+                    }
                 }
             } else /* and 'CONF_RADIO'. */
-                __open_radio_item(cur_config.private);
+                open_radio_item(cur_config.private);
         }
     }
 

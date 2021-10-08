@@ -59,7 +59,7 @@ style:
 	--align-pointer=name \
 	--break-one-line-headers \
 	$(SOURCES) \
-		config.db.h config.parser.h config.utils.h ncurses.gui.h
+		config.db.h config.parser.h config.utils.h ncurses.gui.h defaults.h
 
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
