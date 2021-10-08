@@ -2,7 +2,7 @@
 
 There are only three constructs supported by cyanea-uconfig: *Menu*, *Configuration Option*, and *Multiple Choices*
 
-## Menu [*menu* ... *endmenu*]
+## Menu
 
 Create a menu with "*menu_id*"  name which contains any of the supported constructs. "*menu_id*" appears in GUI.
 
@@ -12,7 +12,7 @@ menu "menu_id"
 	[...]
 endmenu
 ```
-## Configuration Option [*config* ...]
+## Configuration Option
 
 Create a configuration option with "*config_id*" name. The name is optional and can be empty if the configuration option should not appear in the GUI.
 
@@ -25,11 +25,11 @@ config ["config_id"]
 	[help help_info]
 ```
 
-### **SYMBOL**
+### **Symbol name**
 
 A *SYMBOL* is used in output file as configuration variable name. *SYMBOL*  can be uppercase alphanumeric characters and underscore. Some valid names are *CONFIG_ARCH* or *CONFIG_DEBUG_BUILD*. The initial character cannot be a number.
 
-### **Variable type**
+### **Symbol type**
 
 With "*TYPE* initial_value",  user can define type of *SYMBOL* and initialise its default value. *TYPE* can be **BOOL** for boolean, **INTEGER** for integer and **STRING** for string variables. For boolean variable, *initial_value*  can be **true** or **false**, for string variable **"..."** is necessary.
 
@@ -73,11 +73,11 @@ endmenu
 
 ### **Help**
 
-With "**help** help_info", user can write documentation for different constructs. Fot *help_info*, **"..."** is necessary. 
+With "**help** help_info", user can write documentation for different constructs. Fot *help_info*, quotation are necessary. 
 
 **help** is optional.
 
-## Multiple Choices [*config* ...]
+## Multiple Choices
 
 Create a multiple choice with “choice_id“ name which contains list of options. “choice_id“ appears in GUI. 
 
@@ -89,7 +89,7 @@ choice "choice_id"
 	[help help_info]
 ```
 
-With "**option** OP", user can list possible options. *OP* can be string or integer. For string *OP*, **"..."** is necessary. **[default]** set the initial selected option.
+With "**option** OP", user can list possible options. *OP* can be string or integer. For string *OP*, quotations are necessary. **[default]** set the initial selected option.
 
 Example: *CONFIG_X86_MICROARCHITECTURE* is string symbol with multiple options.
 

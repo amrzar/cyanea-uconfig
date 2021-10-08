@@ -40,7 +40,7 @@ typedef const char **_key_t;
  * %b A_BOLD            : Enable extra bright or bold attribute
  * %u A_UNDERLINE       : Enable underline attribute
  * %H A_STANDOUT        : Activate best highlighting mode of the terminal
- * %h Reset A_STANDOUT  : Deactivatehighlighting mode
+ * %h Reset A_STANDOUT  : Deactivate highlighting mode
  * %r Reset attribute   : Normal display
  *
  * 'open_newpad' creates a scrollable window.
