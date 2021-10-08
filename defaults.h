@@ -29,5 +29,7 @@
 #define FOOTNOTE_HIGH 2 /* ... number of lines in footnote section. */
 #define MARGIN_LEFT 2   /* ... index of screen's margin. */
 
+#define _IN_FILE "configs.in"
+#define _OUT_FILE "sys.config.h"
 
 #endif /* __DEFAULTS_H__ */

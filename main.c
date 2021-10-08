@@ -17,6 +17,7 @@
 #include <libgen.h>
 
 #include "config.db.h"
+#include "defaults.h"
 
 extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
@@ -30,12 +31,8 @@ void print_help(char *pname) {
     printf("  [-o file] choose output autoconfig file\n");
 }
 
-#define _IN_FILE "configs.in"
-#define _OUT_FILE "sys.config.h"
-#define _IN_FOLDER dirname(in_filename)
 int main(int argc, char *argv[]) {
-    int option_index = 0;
-    int gen_old_config = 0, need_gui = 0;
+    int option_index = 0, gen_old_config = 0, need_gui = 0;
     _string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
 
     while ((option_index = getopt(argc, argv, "i:o:Ch?u")) != -1) {
@@ -64,14 +61,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* ... initialise symbol hash table. */
+    /* ... initialise parser symbol-table. */
     init_symbol_hash_table();
 
     /* ... main configuration file. */
     if (yy_parse_file(in_filename) != 0)
         return -1;
 
-    if (chdir(_IN_FOLDER) == -1) {
+    if (chdir(dirname(in_filename)) == -1) {
         perror("Changing CWD.");
         return -1;
     }
@@ -109,7 +106,7 @@ int main(int argc, char *argv[]) {
                     return -1;
                 }
             } else
-                return 0;
+                return SUCCESS;
         }
 
         if (build_autoconfig(out_filename) == -1) {
@@ -120,5 +117,5 @@ int main(int argc, char *argv[]) {
         printf("Writing %s: Success\n", out_filename);
     }
 
-    return 0;
+    return SUCCESS;
 }
