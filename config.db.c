@@ -128,8 +128,8 @@ _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
         etoken->flags = flags;
 
         /* TODO 'flags' may be 'TK_LIST_EF_CONDITIONAL'.
-         * Variable token list must be stored separately and evaluated
-         * when processing an item. */
+         * Condition for 'token1' must be stored as a separate token list
+         * retrieved from variable arguments. */
 
         if (flags == TK_LIST_EF_NULL ||
             flags & TK_LIST_EF_DEFAULT)

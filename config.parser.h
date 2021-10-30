@@ -59,7 +59,7 @@ struct expr {
 #define NODE LEFT
 #define RIGHT node.down
 
-/* ... entry's dependancy tree. */
+/* ... entry's dependency tree. */
 typedef struct expr *_expr_t;
 
 struct token_list {
@@ -69,7 +69,7 @@ struct token_list {
 typedef struct token_list *_token_list_t;
 
 #define token_list_add(new, head) ({        \
-        (new)->next = (head); (new);            \
+        (new)->next = (head); (new);        \
     })
 
 #define token_list_for_each(pos, head)      \

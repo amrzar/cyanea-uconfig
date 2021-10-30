@@ -338,7 +338,7 @@ int start_gui(int nr_pages) {
     cbreak();
     noecho();
     set_escdelay(0);
-    init_pair(1, COLOR_WHITE, COLOR_BLUE);
+    init_pair(1, COLOR_WHITE, COLOR_MAGENTA);
     init_pair(2, COLOR_BLACK, COLOR_BLUE);
 
     /* ... maximum depth of 'nr_page'. */

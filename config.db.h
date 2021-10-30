@@ -67,23 +67,32 @@ typedef struct item {
 #define item_inc(_i) (_i)->refcount++
 #define item_dec(_i) (_i)->refcount--
 
-    /* */
+    /* Token list stores list of extended tokens related to this item.
+     *
+     * Configuration Option - The first entry in this list has 'TK_LIST_EF_CONFIG'
+     * flag and stores token for 'BOOL', 'INTEGER' or 'STRING' type. The remaining
+     * entries are tokens from 'select' keyword with 'TK_LIST_EF_NULL' flag.
+     *
+     * Multiple Choices - List of tokens for 'option' keywords. The default entry
+     * has 'TK_LIST_EF_DEFAULT' flag. */
+
     _token_list_t tk_list;
+#define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
 
     struct list_head list;
     struct hlist_node hnode;
 } item_t;
 
-#define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
+static inline _extended_token_t item_get_config_etoken(item_t *item) {
+    _extended_token_t etoken = container_of(item->tk_list, struct extended_token, node);
 
-#define item_get_config_etoken(_i) ({                                                           \
-        _extended_token_t etoken = container_of((_i)->tk_list, struct extended_token, node);    \
-        (etoken->flags & TK_LIST_EF_CONFIG) ? etoken : NULL;                                    \
-    })
+    return etoken->flags & TK_LIST_EF_CONFIG ? etoken : NULL;
+}
 
 extern int __populate_config_file(const char *, unsigned long);
 #define create_config_file(_f) __populate_config_file((_f), TK_LIST_EF_DEFAULT)
-#define write_config_file(_f) __populate_config_file((_f), TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
+#define write_config_file(_f)  __populate_config_file((_f), \
+    (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED))
 
 extern int read_config_file(const char *);
 
