@@ -23,17 +23,17 @@
 
 #define SYMTABLE 256
 
-menu_t mainmenu = {
+menu_t main_menu = {
     NULL,
     NULL, /* ... always true. */
-    LIST_HEAD_INIT(mainmenu.entries),
-    LIST_HEAD_INIT(mainmenu.childs),
-    LIST_HEAD_INIT(mainmenu.sibling)
+    LIST_HEAD_INIT(main_menu.entries),
+    LIST_HEAD_INIT(main_menu.childs),
+    LIST_HEAD_INIT(main_menu.sibling)
 };
 
-static menu_t *curr_menu = MAINMENU;
+menu_t *curr_menu = &main_menu;
 
-_token_list_t config_files = NULL;
+struct list_head config_files = LIST_HEAD_INIT(config_files);
 static struct hlist_head symtable[SYMTABLE];
 
 void init_symbol_hash_table(void) {
@@ -143,14 +143,6 @@ _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
     return token;
 }
 
-void free_etoken(_extended_token_t e) {
-    if (e->token.ttype == TT_SYMBOL ||
-        e->token.ttype == TT_DESCRIPTION)
-        free(e->token.TK_STRING);
-
-    free(e);
-}
-
 static inline int init_entry(struct entry *entry,
     token_t prompt, token_t symbol,
     token_t help, _expr_t expr) {
@@ -224,11 +216,18 @@ int add_new_choice_entry(token_t token1, token_t token2,
 }
 
 int add_new_config_file(token_t token1) {
-    if ((config_files = next_token(config_files,
-                    TK_LIST_EF_NULL, token1)) == NULL)
-        return -1;
+    _config_file_t cfg_file;
 
-    return SUCCESS;
+    if ((cfg_file = malloc(sizeof(struct config_file))) != NULL) {
+        cfg_file->file = token1.TK_STRING;
+        cfg_file->menu = curr_menu;
+
+        list_add_tail(&cfg_file->node, &config_files);
+
+        return SUCCESS;
+    }
+
+    return -1;
 }
 
 static _expr_t new_expr(enum expr_op op) {

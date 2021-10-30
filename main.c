@@ -73,16 +73,13 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    _token_list_t tp;
+    _config_file_t cfg_file;
 
-    while ((tp = config_files) != NULL) {
-        _extended_token_t etoken = container_of(tp, struct extended_token, node);
-        config_files = config_files->next; /* ... move next. */
+    list_for_each_entry(cfg_file, &config_files, node) {
+        curr_menu = cfg_file->menu;
 
-        if (yy_parse_file(etoken->token.TK_STRING) != 0)
+        if (yy_parse_file(cfg_file->file) != 0)
             return -1;
-
-        free_etoken(etoken);
     }
 
     if (gen_old_config == 1) {

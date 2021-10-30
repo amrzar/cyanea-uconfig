@@ -343,7 +343,7 @@ int start_gui(int nr_pages) {
 
     /* ... maximum depth of 'nr_page'. */
     menu_t **pages = calloc(nr_pages, sizeof(menu_t *));
-    pages[index] = MAINMENU;
+    pages[index] = &main_menu;
 
     while (TRUE) {
         config = menu_to_config_struct(pages[index]);

@@ -30,9 +30,15 @@ typedef struct menu {
     struct list_head childs, sibling;
 } menu_t;
 
-extern menu_t mainmenu;
-#define MAINMENU (&mainmenu)
-extern _token_list_t config_files;
+typedef struct config_file {
+    _string_t file;
+    menu_t *menu;       /* ... menu, the config file included in. */
+
+    struct list_head node;
+} *_config_file_t;
+
+extern menu_t main_menu, *curr_menu;
+extern struct list_head config_files;
 
 struct entry {
     _string_t prompt;   /* ... entry's prompt string. */
@@ -54,8 +60,6 @@ typedef struct extended_token {
     struct token_list node;
 } *_extended_token_t;
 
-extern void free_etoken(_extended_token_t);
-
 typedef struct item {
     struct entry common;
 
@@ -70,19 +74,16 @@ typedef struct item {
     struct hlist_node hnode;
 } item_t;
 
-#define item_token_list_for_each(pos, _i)                       \
-    token_list_for_each(pos, (_i)->tk_list)
+#define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
 
-#define item_get_config_etoken(_i) ({                           \
-        _extended_token_t etoken = container_of((_i)->tk_list,  \
-                struct extended_token, node);                   \
-        (etoken->flags & TK_LIST_EF_CONFIG) ? etoken : NULL;    \
+#define item_get_config_etoken(_i) ({                                                           \
+        _extended_token_t etoken = container_of((_i)->tk_list, struct extended_token, node);    \
+        (etoken->flags & TK_LIST_EF_CONFIG) ? etoken : NULL;                                    \
     })
 
 extern int __populate_config_file(const char *, unsigned long);
 #define create_config_file(_f) __populate_config_file((_f), TK_LIST_EF_DEFAULT)
-#define write_config_file(_f) __populate_config_file((_f),      \
-    TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
+#define write_config_file(_f) __populate_config_file((_f), TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)
 
 extern int read_config_file(const char *);
 
@@ -95,7 +96,7 @@ static inline int build_autoconfig(const char *filename) {
 
     fprintf(fp, "#ifndef __UCONFIG_H\n");
     fprintf(fp, "#define __UCONFIG_H\n");
-    __fprintf_menu(fp, MAINMENU);
+    __fprintf_menu(fp, &main_menu);
     fprintf(fp, "#endif /* __UCONFIG_H */\n");
     fclose(fp);
 
