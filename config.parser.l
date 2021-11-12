@@ -11,7 +11,8 @@ ws				[ \t\n]+
 comment			#.*
 qstring			\"[^\"]*\"
 symbol			[A-Z0-9][A-Z0-9_]+
-integer			([0-9]|[1-9][0-9]+)
+integer			([0-9]|[1-9][0-9]+|0x[a-fA-F0-9]+)
+
 
 %%
 
@@ -49,7 +50,8 @@ integer			([0-9]|[1-9][0-9]+)
 }
 
 {integer} {
-	yylval.token.TK_INTEGER = atoi(yytext);
+	yylval.token.TK_INTEGER = strtol(yytext, NULL, 0);
+	yylval.token.info.number.base = strncmp(yytext, "0x", 2) == 0 ? 16 : 10;
 	yylval.token.ttype = TT_INTEGER;
 	return TT_INTEGER;
 }

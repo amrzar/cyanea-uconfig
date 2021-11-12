@@ -11,17 +11,20 @@
 
 typedef char *_string_t;
 typedef struct {
+    int n, base;
+} integer_t;
+typedef struct {
     int ttype;
     union {
-        bool b;
-        int n;
-        _string_t s;
+        bool boolean;
+        integer_t number;
+        _string_t string;
     } info;
 } token_t;
 
-#define TK_BOOL info.b
-#define TK_INTEGER info.n
-#define TK_STRING info.s
+#define TK_BOOL info.boolean
+#define TK_INTEGER info.number.n
+#define TK_STRING info.string
 
 enum expr_op {
     OP_NULL = 1,

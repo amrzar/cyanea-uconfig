@@ -293,7 +293,9 @@ static int open_radio_item(item_t *item) {
 
         if (etoken->token.ttype == TT_INTEGER) {
             choices[num - 1] = alloca(64);
-            snprintf(choices[num - 1], 64, "%d", etoken->token.TK_INTEGER);
+            snprintf (choices[num - 1], 64,
+                etoken->token.info.number.base == 16 ? "0x%X" : "%d",
+                etoken->token.TK_INTEGER);
 
         } else /* and TT_DESCRIPTION. */
             choices[num - 1] = etoken->token.TK_STRING;
@@ -420,13 +422,17 @@ int start_gui(int nr_pages) {
 
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
-                    snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
 
-                    /* ... regex: accept only numeric. */
-                    input = screen_input_box("", item->common.prompt, tmp, "^[0-9]* *$");
+                    if (etoken->token.info.number.base == 16) {
+                        snprintf (tmp, 64, "0x%X", etoken->token.TK_INTEGER);
+                        input = screen_input_box("", item->common.prompt, tmp, "^0x[a-fA-F0-9]* *$");
+                    } else {
+                        snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
+                        input = screen_input_box("", item->common.prompt, tmp, "^[0-9]* *$");
+                    }
 
                     if (input != NULL) {
-                        toggle_config(item, atoi(input));
+                        toggle_config(item, strtol(input, NULL, 0));
                     }
 
                     free(input);
