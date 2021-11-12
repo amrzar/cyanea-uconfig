@@ -389,7 +389,7 @@ int start_gui(int nr_pages) {
 
         case SPECIAL_KEY_H:
             if (cur_config.t != CONF_MENU) {
-                item_t *item = (item_t *)cur_config.private;
+                item_t *item = cur_config.private;
 
                 open_newpad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
                     TITLE_HIGH, MARGIN_LEFT, (item->common.help == NULL) ?
@@ -417,7 +417,7 @@ int start_gui(int nr_pages) {
             else if (cur_config.t == CONF_INPUT) {
                 _string_t input;
 
-                item_t *item = (item_t *)cur_config.private;
+                item_t *item = cur_config.private;
                 _extended_token_t etoken = item_get_config_etoken(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
@@ -437,8 +437,7 @@ int start_gui(int nr_pages) {
 
                     free(input);
                 } else { /* and TT_DESCRIPTION. */
-                    input = screen_input_box("", item->common.prompt,
-                            etoken->token.TK_STRING, "^\"[^\"]*\" *$");
+                    input = screen_input_box("", item->common.prompt, etoken->token.TK_STRING, "");
 
                     if (input != NULL) {
                         toggle_config(item, input);
