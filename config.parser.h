@@ -46,7 +46,7 @@ struct expr {
 };
 
 #define LEFT node.up
-#define NODE LEFT
+#define NODE RIGHT
 #define RIGHT node.down
 
 /* ... entry's dependency tree. */

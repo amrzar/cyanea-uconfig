@@ -9,26 +9,31 @@ extern int yylex (void);
 extern int push_menu(token_t, _expr_t);
 extern int pop_menu(void);
 
-extern _expr_t expr_op_symbol_one(enum expr_op, token_t);
-extern _expr_t expr_op_symbol_two(enum expr_op, token_t, token_t);
-extern _expr_t expr_op_expr_one(enum expr_op, _expr_t);
-extern _expr_t expr_op_expr_two(enum expr_op, _expr_t, _expr_t);
+extern _expr_t add_expr_op(enum expr_op, ...);
+
+#define yy_add_expr_op(op, ...) ({                      \
+    _expr_t _tmp = add_expr_op((op), __VA_ARGS__);      \
+    if ((_tmp) == NULL)                                 \
+        YYERROR;                                        \
+    (_tmp);                                             \
+})
+
 extern _token_list_t next_token(_token_list_t, unsigned long, ...);
+
+#define yy_next_token(token1, flags, ...) ({            \
+    _token_list_t _tmp = next_token((token1),           \
+        (flags), __VA_ARGS__);                          \
+    if ((_tmp) == NULL)                                 \
+        YYERROR;                                        \
+    (_tmp);                                             \
+})
 
 extern int add_new_config_entry(token_t, token_t, token_t, _token_list_t, _expr_t, token_t);
 extern int add_new_choice_entry(token_t, token_t, _token_list_t, _expr_t, token_t);
 extern int add_new_config_file(token_t);
 
-#define YYTEST(_f, ...) ({              \
-    void *_tmp = (_f)(__VA_ARGS__);     \
-    if ((_tmp) == NULL)                 \
-        YYERROR;                        \
-    (_tmp);                             \
-})
-
-#define NULLDESC (token_t) {            \
-    .ttype = TT_DESCRIPTION,            \
-    .TK_STRING = NULL                   \
+#define NULLDESC (token_t) {                            \
+    .ttype = TT_DESCRIPTION, .TK_STRING = NULL          \
 }
 
 %}
@@ -109,33 +114,33 @@ help:                       { $$ = NULLDESC;    } /* empty ... */
 operand: TT_BOOL | TT_INTEGER | TT_DESCRIPTION | TT_SYMBOL;
 
 expression: TT_SYMBOL
-        {   $$ = YYTEST(expr_op_symbol_one, OP_NULL, $1);       }
+        {   $$ = yy_add_expr_op(OP_NULL, $1);                 }
     | operand EQUAL operand
-        {   $$ = YYTEST(expr_op_symbol_two, OP_EQUAL, $1, $3);  }
+        {   $$ = yy_add_expr_op(OP_EQUAL, $1, $3);            }
     | operand NEQUAL operand
-        {   $$ = YYTEST(expr_op_symbol_two, OP_NEQUAL, $1, $3); }
+        {   $$ = yy_add_expr_op(OP_NEQUAL, $1, $3);           }
     | NOT expression
-        {   $$ = YYTEST(expr_op_expr_one, OP_NOT, $2);          }
+        {   $$ = yy_add_expr_op(OP_NOT, $2);                  }
     | expression AND expression
-        {   $$ = YYTEST(expr_op_expr_two, OP_AND, $1, $3);      }
+        {   $$ = yy_add_expr_op(OP_AND, $1, $3);              }
     | expression OR expression
-        {   $$ = YYTEST(expr_op_expr_two, OP_OR, $1, $3);       }
-    | OPENPAREN expression CLOSEPAREN { $$ = $2;                }
+        {   $$ = yy_add_expr_op(OP_OR, $1, $3);               }
+    | OPENPAREN expression CLOSEPAREN { $$ = $2;              }
     ;
 
-dependency:                 { $$ = NULL;        } /* empty ... */
+dependency:                 { $$ = NULL;        } /* empty . */
     | DEPENDES expression   { $$ = $2;          }
     ;
 
 /* === THE 'CONFIG' SPECIFIC KEYWORD RULES === */
 
-config_description:         { $$ = NULLDESC;    } /* empty ... */
+config_description:         { $$ = NULLDESC;    } /* empty . */
     | TT_DESCRIPTION        { $$ = $1;          }
     ;
 
-config_selects:             { $$ = NULL;        } /* empty ... */
+config_selects:             { $$ = NULL;        } /* empty . */
     | SELECT TT_SYMBOL config_selects
-        { $$ = YYTEST(next_token, $3, TK_LIST_EF_NULL, $2);     }
+        { $$ = yy_next_token($3, TK_LIST_EF_NULL, $2);        }
     ;
 
 config_type: BOOL   { $$ = (token_t)  {
@@ -158,25 +163,25 @@ stmt_config: CONFIG config_description TT_SYMBOL
 
 /* === THE 'CHOICE' SPECIFIC KEYWORD RULES === */
 
-choice_default:     { $$ = TK_LIST_EF_NULL;     } /* empty ... */
+choice_default:     { $$ = TK_LIST_EF_NULL;     } /* empty . */
     | DEFAULT       { $$ = TK_LIST_EF_DEFAULT;  }
     ;
 
-choice_int_def:            { $$ = NULL;         } /* empty ... */
+choice_int_def:            { $$ = NULL;         } /* empty . */
     | OPTION TT_INTEGER choice_default choice_int_def
-        { $$ = YYTEST(next_token, $4, $3, $2);  }
+        { $$ = yy_next_token($4, $3, $2);       }
     ;
 
-choice_str_def:            { $$ = NULL;         } /* empty ... */
+choice_str_def:            { $$ = NULL;         } /* empty . */
     | OPTION TT_DESCRIPTION choice_default choice_str_def
-        { $$ = YYTEST(next_token, $4, $3, $2);  }
+        { $$ = yy_next_token($4, $3, $2);       }
     ;
 
 choice_options: /* ... options should have same type. */
       OPTION TT_INTEGER choice_default choice_int_def
-        { $$ = YYTEST(next_token, $4, $3, $2);                  }
+        { $$ = yy_next_token($4, $3, $2);                     }
     | OPTION TT_DESCRIPTION choice_default choice_str_def
-        { $$ = YYTEST(next_token, $4, $3, $2);                  }
+        { $$ = yy_next_token($4, $3, $2);                     }
 ;
 
 stmt_choice: CHOICE TT_DESCRIPTION TT_SYMBOL

@@ -107,7 +107,6 @@ int pop_menu(void) {
 _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
     va_list valist;
     _extended_token_t etoken;
-    _token_list_t token = NULL;
 
     va_start(valist, flags);
 
@@ -115,19 +114,23 @@ _token_list_t next_token(_token_list_t token1, unsigned long flags, ...) {
         etoken->flags = flags;
 
         /* TODO 'flags' may be 'TK_LIST_EF_CONDITIONAL'.
-         * Condition for 'token1' must be stored as a separate token list
+         * Condition for 'etoken' must be stored as a separate token list
          * retrieved from variable arguments. */
 
         if (flags == TK_LIST_EF_NULL ||
             flags & TK_LIST_EF_DEFAULT)
             etoken->token = va_arg(valist, token_t);
 
-        token = token_list_add(&etoken->node, token1);
+        /* 'token1' is the tail of token list from last call. */
+
+        token1 = token_list_add(&etoken->node, token1);
+    } else {
+        token1 = NULL;
     }
 
     va_end(valist);
 
-    return token;
+    return token1;
 }
 
 static inline int init_entry(struct entry *entry,
@@ -217,53 +220,41 @@ int add_new_config_file(token_t token1) {
     return -1;
 }
 
-static _expr_t new_expr(enum expr_op op) {
+_expr_t add_expr_op(enum expr_op op, ...) {
+    va_list valist;
     _expr_t expr;
 
-    if ((expr = malloc(sizeof(struct expr))) != NULL)
-        expr->op = op;
-
-    return expr;
-}
-
-_expr_t expr_op_symbol_one(enum expr_op op, token_t token1) {
-    _expr_t expr;
-
-    if ((expr = new_expr(op)) != NULL)
-        expr->NODE.token = token1;
-
-    return expr;
-}
-
-_expr_t expr_op_symbol_two(enum expr_op op,
-    token_t token1, token_t token2) {
-    _expr_t expr;
-
-    if ((expr = new_expr(op)) != NULL) {
-        expr->LEFT.token = token1;
-        expr->RIGHT.token = token2;
+    if ((expr = malloc(sizeof(struct expr))) == NULL) {
+        return NULL;
     }
 
-    return expr;
-}
+    va_start(valist, op);
 
-_expr_t expr_op_expr_one(enum expr_op op, _expr_t expr1) {
-    _expr_t expr;
+    switch (op) {
+    case OP_EQUAL:
+    case OP_NEQUAL:
+        expr->LEFT.token = va_arg(valist, token_t);
 
-    if ((expr = new_expr(op)) != NULL)
-        expr->NODE.expr = expr1;
+    case OP_NULL: /* 'RIGHT' is same as 'NODE' */
+        expr->RIGHT.token = va_arg(valist, token_t);
+        break;
 
-    return expr;
-}
+    case OP_AND:
+    case OP_OR:
+        expr->LEFT.expr = va_arg(valist, _expr_t);
 
-_expr_t expr_op_expr_two(enum expr_op op,
-    _expr_t expr1, _expr_t expr2) {
-    _expr_t expr;
+    case OP_NOT: /* 'RIGHT' is same as 'NODE' */
+        expr->RIGHT.expr = va_arg(valist, _expr_t);
+        break;
 
-    if ((expr = new_expr(op)) != NULL) {
-        expr->LEFT.expr = expr1;
-        expr->RIGHT.expr = expr2;
+    default:
+        free(expr);
+
+        expr = NULL;
     }
+
+    expr->op = op;
+    va_end(valist);
 
     return expr;
 }
