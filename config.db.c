@@ -544,12 +544,11 @@ int read_config_file(const char *filename) {
     FILE *fp;
     _string_t symbol = NULL, value;
     size_t n = 0;
-    ssize_t llen;
 
     if ((fp = fopen(filename, "r")) == NULL)
         return -1;
 
-    while ((llen = getline(&symbol, &n, fp)) != -1) {
+    while (getline(&symbol, &n, fp) != -1) {
         if (symbol[0] == '#')
             continue; /* ... ignore comments. */
 
