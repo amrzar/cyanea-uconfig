@@ -138,7 +138,12 @@ config_selects:				{ $$ = NULL; 		} /* empty ... */
 		{ $$ = YYTEST(next_token, $3, TK_LIST_EF_NULL, $2);		}
 	;
 
-config_type: BOOL TT_BOOL	{ $$ = $2; 			}
+config_type: BOOL 	{ $$ = (token_t) {
+		.ttype = TT_BOOL,
+		.TK_BOOL = true
+		};
+	}
+	| BOOL TT_BOOL			{ $$ = $2; 			}
 	| INTEGER TT_INTEGER	{ $$ = $2; 			}
 	| STRING TT_DESCRIPTION	{ $$ = $2; 			}
 	;
