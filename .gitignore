@@ -53,3 +53,8 @@ dkms.conf
 
 # uconfig files
 .old.config
+config.ncurses
+lex.yy.c
+y.output
+y.tab.c
+y.tab.h
