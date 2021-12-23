@@ -236,7 +236,7 @@ static config_t *menu_to_config_struct(menu_t *parent) {
      * other items. Reuse 'conf' as menu expands but never dellocate it. */
 
     list_for_each_entry(menu, &parent->childs, sibling) {
-        if (eval_expr(menu->dependancy)) {
+        if (eval_expr(menu->dependency)) {
 
             if (++num > conf_size) {
                 if ((conf = relloc_conf(conf, num)) == NULL)
@@ -250,7 +250,7 @@ static config_t *menu_to_config_struct(menu_t *parent) {
 
     list_for_each_entry(item, &parent->entries, list) {
         if (item->common.prompt != NULL &&
-            eval_expr(item->common.dependancy)) {
+            eval_expr(item->common.dependency)) {
             _extended_token_t etoken;
 
             if (++num > conf_size) {

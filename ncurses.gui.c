@@ -281,7 +281,7 @@ int GUI_FUNCTION(open_radio_box,
     _string_t choices[],
     int max_row,
     int selected,
-    int max_radio_box_heigt) {
+    int max_radio_box_row) {
 
     WINDOW *menu_win;
     MENU *menu;
@@ -289,11 +289,11 @@ int GUI_FUNCTION(open_radio_box,
     int n;
 
     if (open_popup(height, width, y, x,
-            max_radio_box_heigt, message, okcancel_keys()) == ERR)
+            max_radio_box_row, message, okcancel_keys()) == ERR)
         return -1;
 
-    menu_win = derwin(POPUP, max_radio_box_heigt, width - 2,
-            height - max_radio_box_heigt + 1, 2);
+    menu_win = derwin(POPUP, max_radio_box_row, width - 2,
+            height - max_radio_box_row + 1, 2);
 
     if (menu_win == NULL)
         goto radio_box_exit;
@@ -314,7 +314,7 @@ int GUI_FUNCTION(open_radio_box,
     set_menu_win(menu, POPUP);
     set_menu_sub(menu, menu_win);
     set_menu_mark(menu, "  ");
-    set_menu_format(menu, max_radio_box_heigt, 1);
+    set_menu_format(menu, max_radio_box_row, 1);
     set_menu_back(menu, POPUP_COLOR_ATTR);
     post_menu(menu);
 

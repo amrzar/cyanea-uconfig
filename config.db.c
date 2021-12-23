@@ -82,7 +82,7 @@ int push_menu(token_t token, _expr_t expr) {
 
     if ((menu = malloc(sizeof(menu_t))) != NULL) {
         menu->prompt = token.TK_STRING;
-        menu->dependancy = expr;
+        menu->dependency = expr;
         init_list_head(&menu->entries);
         init_list_head(&menu->childs);
         init_list_head(&menu->sibling);
@@ -139,7 +139,7 @@ static inline int init_entry(struct entry *entry,
 
     entry->prompt = prompt.TK_STRING;
     entry->symbol = symbol.TK_STRING;
-    entry->dependancy = expr;
+    entry->dependency = expr;
     entry->help = help.TK_STRING;
 
     return SUCCESS;
@@ -374,14 +374,14 @@ void __fprintf_menu(FILE *fp, menu_t *menu) {
     menu_t *m;
     item_t *item;
 
-    if (eval_expr(menu->dependancy)) {
+    if (eval_expr(menu->dependency)) {
         /* ... handle childs, first. */
         list_for_each_entry(m, &menu->childs, sibling) {
             __fprintf_menu(fp, m);
         }
 
         list_for_each_entry(item, &menu->entries, list) {
-            if (eval_expr(item->common.dependancy)) {
+            if (eval_expr(item->common.dependency)) {
 
                 _token_list_t tp;
                 item_token_list_for_each(tp, item) {

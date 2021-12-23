@@ -10,7 +10,7 @@
 
 typedef struct menu {
     _string_t prompt;
-    _expr_t dependancy;
+    _expr_t dependency;
 
     /* ... list of items in the menu. */
     struct list_head entries;
@@ -30,7 +30,7 @@ extern struct list_head config_files;
 struct entry {
     _string_t prompt;   /* ... entry's prompt string. */
     _string_t symbol;   /* ... entry's configuration symbol. */
-    _expr_t dependancy; /* ... dependancy tree for this symbol. */
+    _expr_t dependency; /* ... dependency tree for this symbol. */
     _string_t help;     /* ... help statements. */
 };
 

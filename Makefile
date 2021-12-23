@@ -6,19 +6,19 @@ SOURCES = config.db.c main.c ncurses.gui.c gui.c
 -include $(DEPS)
 
 y.tab.c: config.parser.y
-	$(Q)echo "YY $@"
+	@echo "YY $@"
 	$(Q)yacc -d $< --debug --verbose # Genetate y.tab.h as well.
 
 lex.yy.c: config.parser.l
-	$(Q)echo "LX $@"
+	@echo "LX $@"
 	$(Q)lex $<
 
 config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
-	$(Q)echo "LD $@"
+	@echo "LD $@"
 	$(Q)$(HOSTCC) $^ -lncurses -lmenu -lform -ly -o $@
 
 %.o: %.c
-	$(Q)echo "CC $<"
+	@echo "CC $<"
 	$(Q)$(HOSTCC) $(HOSTCFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
 
 menuconfig: config.ncurses
