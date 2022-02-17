@@ -10,7 +10,7 @@ extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
 extern void init_symbol_hash_table(void);
 
-void print_help(char *pname) {
+static void print_help(char *pname) {
     printf("\nUse: %s [OPTIONS]\n", pname);
     printf("  [-C]      creates default '.old.config' from the input config file\n");
     printf("  [-u]      open the GUI\n");
