@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <libgen.h>
+#include <getopt.h>
 
 #include "config.db.h"
 #include "defaults.h"
@@ -12,18 +13,35 @@ extern void init_symbol_hash_table(void);
 
 static void print_help(char *pname) {
     printf("\nUse: %s [OPTIONS]\n", pname);
-    printf("  [-C]      creates default '.old.config' from the input config file\n");
-    printf("  [-u]      open the GUI\n");
-    printf("  [-i file] choose input config file\n");
-    printf("  [-o file] choose output autoconfig file\n");
+    printf("  [--dump]             creates default '.old.config' from the input config file\n");
+    printf("  [--gui]              open the GUI\n");
+    printf("  [--config file]      choose input config file\n");
+    printf("  [--sys-config file]  choose output autoconfig file\n");
 }
 
+int gen_old_config = 0, need_gui = 0;
+
 int main(int argc, char *argv[]) {
-    int option_index = 0, gen_old_config = 0, need_gui = 0;
     _string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
 
-    while ((option_index = getopt(argc, argv, "i:o:Ch?u")) != -1) {
-        switch (option_index) {
+    while (1) {
+        static struct option long_options[] = {
+            {"dump", no_argument, &gen_old_config, 1},
+            {"gui", no_argument, &need_gui, 1},
+            {"config", required_argument, NULL, 'i'},
+            {"sys-config", required_argument, NULL, 'o'},
+            {"help", required_argument, NULL, 'h'}
+        };
+
+        int c = getopt_long (argc, argv, "", long_options, NULL);
+
+        if (c == -1)
+            break;
+
+        switch (c) {
+        case 0: /* ... option sets a flag, do nothing here. */
+            break;
+
         case 'i':
             in_filename = optarg;
             break;
@@ -32,15 +50,10 @@ int main(int argc, char *argv[]) {
             out_filename = optarg;
             break;
 
-        case 'C':
-            gen_old_config = 1;
-            break;
-
-        case 'u':
-            need_gui = 1;
-            break;
-
         case 'h':
+            print_help(argv[0]);
+            return SUCCESS;
+
         case '?':
         default:
             print_help(argv[0]);

@@ -1,5 +1,7 @@
 #  SPDX-License-Identifier: GPL-2.0-or-later
 
+configs.in ?= $(srctree)/configs.in
+
 DEPS = $(wildcard *.d)
 SOURCES = config.db.c main.c ncurses.gui.c gui.c
 
@@ -22,14 +24,14 @@ config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
 	$(Q)$(HOSTCC) $(HOSTCFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
 
 menuconfig: config.ncurses
-	$(Q)./config.ncurses -i $(CONFIG) -o $(SYS_CONFIG) -u
+	$(Q)./config.ncurses --config $(configs.in) --sys-config $(sysconfig) --gui
 
 silentoldconfig: config.ncurses
-	$(Q)./config.ncurses -i $(CONFIG) -o $(SYS_CONFIG)
+	$(Q)./config.ncurses --config $(configs.in) --sys-config $(sysconfig)
 
 defconfig: config.ncurses
-	$(Q)rm -f $(dir $(CONFIG)).old.config
-	$(Q)./config.ncurses -C -i $(CONFIG)
+	$(Q)rm -f $(dir $(configs.in)).old.config
+	$(Q)./config.ncurses --dump --config $(configs.in)
 
 style:
 	$(Q)astyle \
