@@ -22,14 +22,14 @@ config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
 	$(Q)$(HOSTCC) $(HOSTCFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
 
 menuconfig: config.ncurses
-	$(Q)./config.ncurses -i $(I) -o $(OUT) -u
+	$(Q)./config.ncurses -i $(CONFIG) -o $(SYS_CONFIG) -u
 
 silentoldconfig: config.ncurses
-	$(Q)./config.ncurses -i $(I) -o $(OUT)
+	$(Q)./config.ncurses -i $(CONFIG) -o $(SYS_CONFIG)
 
 defconfig: config.ncurses
-	$(Q)rm -f $(dir $(I)).old.config
-	$(Q)./config.ncurses -C -i $(I)
+	$(Q)rm -f $(dir $(CONFIG)).old.config
+	$(Q)./config.ncurses -C -i $(CONFIG)
 
 style:
 	$(Q)astyle \
