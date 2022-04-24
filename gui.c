@@ -222,7 +222,7 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
     })
 
 #define relloc_conf(_c, _n) __realloc((_c), (_n), sizeof(config_t))
-#define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(_string_t))
+#define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(string_t))
 
 static config_t *menu_to_config_struct(menu_t *parent) {
     static int conf_size = 0;
@@ -283,7 +283,7 @@ static int open_radio_item(item_t *item) {
     _token_list_t tp;
 
     int num = 0, selected = -1;
-    _string_t *choices = NULL;
+    string_t *choices = NULL;
 
     item_token_list_for_each(tp, item) {
         _extended_token_t etoken = container_of(tp, struct extended_token, node);
@@ -415,7 +415,7 @@ int start_gui(int nr_pages) {
                 toggle_config(cur_config.private);
 
             else if (cur_config.t == CONF_INPUT) {
-                _string_t input;
+                string_t input;
 
                 item_t *item = cur_config.private;
                 _extended_token_t etoken = item_get_config_etoken(item);

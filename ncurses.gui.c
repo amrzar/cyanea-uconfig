@@ -17,7 +17,7 @@ static _key_t okcancel_keys(void) {
     return keys;
 }
 
-static inline _string_t trim_tail(_string_t str) {
+static inline string_t trim_tail(string_t str) {
     int slen = strlen(str);
 
     while (isspace(str[slen - 1]) != 0)
@@ -127,7 +127,7 @@ static int close_popup(void) {
 
 int GUI_FUNCTION(open_textfile, const char *path) {
     FILE *fp;
-    _string_t tmp;
+    string_t tmp;
 
     if ((fp = fopen(path, "r")) == NULL)
         return -1;
@@ -167,7 +167,7 @@ int GUI_FUNCTION(open_message_box, const char *message, _key_t keys) {
     return getch_key;
 }
 
-_string_t GUI_FUNCTION(open_input_box,
+string_t GUI_FUNCTION(open_input_box,
     const char *help,
     const char *message,
     const char *initial,
@@ -176,7 +176,7 @@ _string_t GUI_FUNCTION(open_input_box,
     WINDOW *form_win;
     FORM *form;
     FIELD *fields[3] = { NULL };
-    _string_t input = NULL;
+    string_t input = NULL;
     size_t n;
 
     if ((n = strlen(message)) > width + 2)
@@ -278,7 +278,7 @@ input_box_exit:
 
 int GUI_FUNCTION(open_radio_box,
     const char *message,
-    _string_t choices[],
+    string_t choices[],
     int max_row,
     int selected,
     int max_radio_box_row) {

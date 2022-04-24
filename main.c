@@ -4,7 +4,7 @@
 #include <libgen.h>
 #include <getopt.h>
 
-#include "config.db.h"
+#include "db.h"
 #include "defaults.h"
 
 extern int start_gui(int);
@@ -22,7 +22,7 @@ static void print_help(char *pname) {
 int gen_old_config = 0, need_gui = 0;
 
 int main(int argc, char *argv[]) {
-    _string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
+    string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
 
     while (1) {
         static struct option long_options[] = {

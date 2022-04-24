@@ -1,18 +1,18 @@
 %{
 
 #include "config.parser.h"
-#include "config.db.h"
+#include "db.h"
 
 extern void yyerror(char *s);
 extern int yylex (void);
 
-extern int push_menu(token_t, _expr_t);
+extern int push_menu(token_t, expr_t);
 extern int pop_menu(void);
 
-extern _expr_t add_expr_op(enum expr_op, ...);
+extern expr_t add_expr_op(enum expr_op, ...);
 
 #define yy_add_expr_op(op, ...) ({                      \
-    _expr_t _tmp = add_expr_op((op), __VA_ARGS__);      \
+    expr_t _tmp = add_expr_op((op), __VA_ARGS__);       \
     if ((_tmp) == NULL)                                 \
         YYERROR;                                        \
     (_tmp);                                             \
@@ -28,8 +28,8 @@ extern _token_list_t next_token(_token_list_t, unsigned long, ...);
     (_tmp);                                             \
 })
 
-extern int add_new_config_entry(token_t, token_t, token_t, _token_list_t, _expr_t, token_t);
-extern int add_new_choice_entry(token_t, token_t, _token_list_t, _expr_t, token_t);
+extern int add_new_config_entry(token_t, token_t, token_t, _token_list_t, expr_t, token_t);
+extern int add_new_choice_entry(token_t, token_t, _token_list_t, expr_t, token_t);
 extern int add_new_config_file(token_t);
 
 #define NULLDESC (token_t) {                            \
@@ -43,7 +43,7 @@ extern int add_new_config_file(token_t);
     unsigned long flags;
     token_t token;
     _token_list_t tokenlist;
-    _expr_t exprtree;
+    expr_t exprtree;
 }
 
 %start stmt_line

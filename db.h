@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#ifndef __CONFIG_DB_H__
-#define __CONFIG_DB_H__
+#ifndef __DB_H__
+#define __DB_H__
 
 #include "config.parser.h"
-#include "config.utils.h"
+#include "utils.h"
 
 #define SUCCESS 0
 
 typedef struct menu {
-    _string_t prompt;
-    _expr_t dependency;
+    string_t prompt;
+    expr_t dependency;
 
     /* ... list of items in the menu. */
     struct list_head entries;
@@ -18,7 +18,7 @@ typedef struct menu {
 } menu_t;
 
 typedef struct config_file {
-    _string_t file;
+    string_t file;
     menu_t *menu;       /* ... menu, the config file included in. */
 
     struct list_head node;
@@ -28,10 +28,10 @@ extern menu_t main_menu, *curr_menu;
 extern struct list_head config_files;
 
 struct entry {
-    _string_t prompt;   /* ... entry's prompt string. */
-    _string_t symbol;   /* ... entry's configuration symbol. */
-    _expr_t dependency; /* ... dependency tree for this symbol. */
-    _string_t help;     /* ... help statements. */
+    string_t prompt;   /* ... entry's prompt string. */
+    string_t symbol;   /* ... entry's configuration symbol. */
+    expr_t dependency; /* ... dependency tree for this symbol. */
+    string_t help;     /* ... help statements. */
 };
 
 #define TK_LIST_EF_NULL 0
@@ -61,7 +61,9 @@ typedef struct item {
      * entries are tokens from 'select' keyword with 'TK_LIST_EF_NULL' flag.
      *
      * Multiple Choices - List of tokens for 'option' keywords. The default entry
-     * has 'TK_LIST_EF_DEFAULT' flag. */
+     * has 'TK_LIST_EF_DEFAULT' flag.
+     *
+     **/
 
     _token_list_t tk_list;
 #define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
@@ -83,7 +85,7 @@ extern int __populate_config_file(const char *, unsigned long);
 
 extern int read_config_file(const char *);
 
-extern void __fprintf_menu(FILE *, menu_t *);
+extern void fprintf_menu(FILE *, menu_t *);
 static inline int build_autoconfig(const char *filename) {
     FILE *fp;
 
@@ -92,15 +94,15 @@ static inline int build_autoconfig(const char *filename) {
 
     fprintf(fp, "#ifndef __UCONFIG_H\n");
     fprintf(fp, "#define __UCONFIG_H\n");
-    __fprintf_menu(fp, &main_menu);
+    fprintf_menu(fp, &main_menu);
     fprintf(fp, "#endif /* __UCONFIG_H */\n");
     fclose(fp);
 
     return SUCCESS;
 }
 
-extern void __toggle_choice(_extended_token_t, _string_t);
-static inline void toggle_choice(item_t *item, _string_t n) {
+extern void __toggle_choice(_extended_token_t, string_t);
+static inline void toggle_choice(item_t *item, string_t n) {
     _token_list_t tp;
 
     item_token_list_for_each(tp, item) {
@@ -113,6 +115,6 @@ static inline void toggle_choice(item_t *item, _string_t n) {
 }
 
 extern void toggle_config(item_t *, ...);
-extern bool eval_expr(_expr_t);
+extern bool eval_expr(expr_t);
 
-#endif /* __CONFIG_DB_H__ */
+#endif /* __DB_H__ */
