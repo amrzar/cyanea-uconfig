@@ -253,7 +253,9 @@ expr_t add_expr_op(enum expr_op op, ...) {
         expr = NULL;
     }
 
-    expr->op = op;
+    if (expr != NULL)
+        expr->op = op;
+
     va_end(valist);
 
     return expr;
