@@ -315,7 +315,10 @@ bool eval_expr(expr_t expr) {
         if ((item = hash_get_item(expr->NODE.token.TK_STRING)) != NULL) {
             if (((etoken = item_get_config_etoken(item)) != NULL) &&
                 (etoken->token.ttype == TT_BOOL)) {
-                return etoken->token.TK_BOOL;
+
+                /* ... only return 'TK_BOOL' if item's dependency is satisfied. */
+                return eval_expr(item->common.dependency) &&
+                    etoken->token.TK_BOOL;
             }
         }
 
