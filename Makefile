@@ -35,6 +35,7 @@ defconfig: config.ncurses
 
 style:
 	$(Q)astyle \
+	--suffix=none \
 	--style=attach \
 	--indent-after-parens \
 	--indent-preproc-define \
