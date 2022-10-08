@@ -394,7 +394,7 @@ void fprintf_menu(FILE *fp, menu_t *menu) {
 
                             /* Assume 'false' as undefined symbol. */
                             if (etoken->token.TK_BOOL == true)
-                                fprintf(fp, "#define %s 1\n", item->common.symbol);
+                                fprintf(fp, "#define %s y\n", item->common.symbol);
 
                         } else if (etoken->token.ttype == TT_INTEGER)
                             fprintf(fp, "#define %s %d\n", item->common.symbol,
