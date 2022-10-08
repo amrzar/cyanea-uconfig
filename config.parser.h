@@ -50,16 +50,8 @@ struct expr {
 #define RIGHT node.down
 };
 
-/*
- * Single pointer linked list 'struct token_list'.
- * It is used with 'token_t' to store the list of parsed tokens from config files.
- * See 'struct extended_token' in db.h file.
- *
- **/
-
-typedef struct token_list *_token_list_t;
 struct token_list {
-    _token_list_t next;
+    struct token_list *next;
 };
 
 #define token_list_add(new, head) ({        \

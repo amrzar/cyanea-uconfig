@@ -251,7 +251,7 @@ static config_t *menu_to_config_struct(menu_t *parent) {
     list_for_each_entry(item, &parent->entries, list) {
         if (item->common.prompt != NULL &&
             eval_expr(item->common.dependency)) {
-            _extended_token_t etoken;
+            struct extended_token *etoken;
 
             if (++num > conf_size) {
                 if ((conf = relloc_conf(conf, num)) == NULL)
@@ -280,13 +280,13 @@ static config_t *menu_to_config_struct(menu_t *parent) {
 }
 
 static int open_radio_item(item_t *item) {
-    _token_list_t tp;
+    struct token_list *tp;
 
     int num = 0, selected = -1;
     string_t *choices = NULL;
 
     item_token_list_for_each(tp, item) {
-        _extended_token_t etoken = container_of(tp, struct extended_token, node);
+        struct extended_token *etoken = item_token_list_entry(tp);
 
         if ((choices = relloc_str(choices, ++num)) == NULL)
             return -1;
@@ -418,17 +418,19 @@ int start_gui(int nr_pages) {
                 string_t input;
 
                 item_t *item = cur_config.private;
-                _extended_token_t etoken = item_get_config_etoken(item);
+                struct extended_token *etoken = item_get_config_etoken(item);
 
                 if (etoken->token.ttype == TT_INTEGER) {
                     char tmp[64];
 
                     if (etoken->token.info.number.base == 16) {
                         snprintf (tmp, 64, "0x%X", etoken->token.TK_INTEGER);
-                        input = screen_input_box("", item->common.prompt, tmp, "^0x[a-fA-F0-9]* *$");
+                        input = screen_input_box("",
+                                item->common.prompt, tmp, "^0x[a-fA-F0-9]* *$");
                     } else {
                         snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
-                        input = screen_input_box("", item->common.prompt, tmp, "^[0-9]* *$");
+                        input = screen_input_box("",
+                                item->common.prompt, tmp, "^[0-9]* *$");
                     }
 
                     if (input != NULL) {
@@ -437,7 +439,8 @@ int start_gui(int nr_pages) {
 
                     free(input);
                 } else { /* and TT_DESCRIPTION. */
-                    input = screen_input_box("", item->common.prompt, etoken->token.TK_STRING, "");
+                    input = screen_input_box("",
+                            item->common.prompt, etoken->token.TK_STRING, "");
 
                     if (input != NULL) {
                         toggle_config(item, input);

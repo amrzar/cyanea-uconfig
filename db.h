@@ -17,12 +17,12 @@ typedef struct menu {
     struct list_head childs, sibling;
 } menu_t;
 
-typedef struct config_file {
+struct config_file {
     string_t file;
     menu_t *menu;       /* ... menu, the config file included in. */
 
     struct list_head node;
-} *_config_file_t;
+};
 
 extern menu_t main_menu, *curr_menu;
 extern struct list_head config_files;
@@ -40,12 +40,12 @@ struct entry {
 #define TK_LIST_EF_SELECTED 4
 #define TK_LIST_EF_CONDITIONAL 8
 
-typedef struct extended_token {
+struct extended_token {
     unsigned long flags;
     token_t token;
 
     struct token_list node;
-} *_extended_token_t;
+};
 
 typedef struct item {
     struct entry common;
@@ -65,16 +65,16 @@ typedef struct item {
      *
      **/
 
-    _token_list_t tk_list;
+    struct token_list *tk_list;
 #define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
+#define item_token_list_entry(tp) container_of((tp), struct extended_token, node)
 
     struct list_head list;
     struct hlist_node hnode;
 } item_t;
 
-static inline _extended_token_t item_get_config_etoken(item_t *item) {
-    _extended_token_t etoken = container_of(item->tk_list, struct extended_token, node);
-
+static inline struct extended_token *item_get_config_etoken(item_t *item) {
+    struct extended_token *etoken = item_token_list_entry(item->tk_list);
     return etoken->flags & TK_LIST_EF_CONFIG ? etoken : NULL;
 }
 
@@ -101,12 +101,12 @@ static inline int build_autoconfig(const char *filename) {
     return SUCCESS;
 }
 
-extern void __toggle_choice(_extended_token_t, string_t);
+extern void __toggle_choice(struct extended_token *, string_t);
 static inline void toggle_choice(item_t *item, string_t n) {
-    _token_list_t tp;
+    struct token_list *tp;
 
     item_token_list_for_each(tp, item) {
-        _extended_token_t etoken = container_of(tp, struct extended_token, node);
+        struct extended_token *etoken = item_token_list_entry(tp);
 
         /* ... remove 'TK_LIST_EF_SELECTED', first. */
         etoken->flags &= ~TK_LIST_EF_SELECTED;

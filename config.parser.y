@@ -18,18 +18,20 @@ extern expr_t add_expr_op(enum expr_op, ...);
     (_tmp);                                             \
 })
 
-extern _token_list_t next_token(_token_list_t, unsigned long, ...);
+extern struct token_list *next_token(struct token_list *, unsigned long, ...);
 
 #define yy_next_token(token1, flags, ...) ({            \
-    _token_list_t _tmp = next_token((token1),           \
+    struct token_list *_tmp = next_token((token1),      \
         (flags), __VA_ARGS__);                          \
     if ((_tmp) == NULL)                                 \
         YYERROR;                                        \
     (_tmp);                                             \
 })
 
-extern int add_new_config_entry(token_t, token_t, token_t, _token_list_t, expr_t, token_t);
-extern int add_new_choice_entry(token_t, token_t, _token_list_t, expr_t, token_t);
+extern int add_new_config_entry(token_t, token_t,
+    token_t, struct token_list *, expr_t, token_t);
+extern int add_new_choice_entry(token_t, token_t,
+    struct token_list *, expr_t, token_t);
 extern int add_new_config_file(token_t);
 
 #define NULLDESC (token_t) {                            \
@@ -42,7 +44,7 @@ extern int add_new_config_file(token_t);
 {
     unsigned long flags;
     token_t token;
-    _token_list_t tokenlist;
+    struct token_list *tokenlist;
     expr_t exprtree;
 }
 

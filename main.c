@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    _config_file_t cfg_file;
+    struct config_file *cfg_file;
 
     list_for_each_entry(cfg_file, &config_files, node) {
         curr_menu = cfg_file->menu;
