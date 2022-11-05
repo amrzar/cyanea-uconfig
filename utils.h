@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #undef offsetof
-#define offsetof(type, member) ((size_t)&((type *)0)->member)
+#define offsetof(type, member) __builtin_offsetof(type, member)
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(ptr) - offsetof(type, member)))
@@ -25,23 +25,30 @@ static inline void INIT_LIST_HEAD(struct list_head *entry) {
     entry->next = entry->prev = entry;
 }
 
-static inline void list_add(struct list_head *new,
+static inline void list_add(struct list_head *entry,
     struct list_head *prev, struct list_head *next) {
-
-    next->prev = new;
-    new->next = next;
-    new->prev = prev;
-    prev->next = new;
+    next->prev  = entry;
+    entry->next = next;
+    entry->prev = prev;
+    prev->next  = entry;
 }
 
-static inline void list_add_tail(struct list_head *new, struct list_head *head) {
-    list_add(new, head->prev, head);
+static inline void list_add_tail(struct list_head *entry, struct list_head *head) {
+    list_add(entry, head->prev, head);
 }
+
+#define list_first_entry(ptr, type, member) \
+    container_of((ptr)->next, type, member)
+
+#define list_entry_is_head(pos, head, member) (&pos->member == (head))
+
+#define list_next_entry(pos, member) \
+    container_of((pos)->member.next, typeof(*(pos)), member)
 
 #define list_for_each_entry(pos, head, member) \
-    for (pos = container_of((head)->next, typeof(*(pos)), member); \
-        &pos->member != (head); \
-        pos = container_of((pos)->member.next, typeof(*(pos)), member))
+    for (pos = list_first_entry((head), typeof(*(pos)), member); \
+        !list_entry_is_head(pos, head, member); \
+        pos = list_next_entry(pos, member))
 
 /*
  * Double linked lists 'struct hlist_node' with a single pointer
@@ -60,19 +67,20 @@ struct hlist_node {
 #define HLIST_HEAD_INIT { .first = NULL }
 #define INIT_HLIST_HEAD(head) ((head)->first = NULL)
 static inline void INIT_HLIST_NODE(struct hlist_node *entry) {
-    entry->next = NULL;
+    entry->next  = NULL;
     entry->pprev = NULL;
 }
 
-static inline void hlist_add_head(struct hlist_node *new, struct hlist_head *head) {
+static inline void hlist_add_head(struct hlist_node *entry, struct hlist_head *head) {
     struct hlist_node *first = head->first;
-    new->next = first;
+    entry->next = first;
 
-    if (first != NULL)
-        first->pprev = &new->next;
+    if (first != NULL) {
+        first->pprev = &entry->next;
+    }
 
-    head->first = new;
-    new->pprev = &head->first;
+    head->first = entry;
+    entry->pprev = &head->first;
 }
 
 #define hlist_entry_safe(ptr, type, member) \
@@ -85,7 +93,7 @@ static inline void hlist_add_head(struct hlist_node *new, struct hlist_head *hea
         pos; \
         pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
 
-#define debug_print(...) fprintf(stderr, "[debug_print]" __VA_ARGS__)
-#define error_print(...) fprintf(stderr, "[error_print]" __VA_ARGS__)
+#define debug_print(...) fprintf(stderr, "[debug_print] " __VA_ARGS__)
+#define error_print(...) fprintf(stderr, "[error_print] " __VA_ARGS__)
 
 #endif /* __UTILS_H__ */
