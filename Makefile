@@ -34,22 +34,7 @@ defconfig: config.ncurses
 	$(Q)./config.ncurses --dump --config $(configs.in)
 
 style:
-	$(Q)astyle \
-	--suffix=none \
-	--style=attach \
-	--indent-after-parens \
-	--indent-preproc-define \
-	--convert-tabs \
-	--indent-labels \
-	--indent-preproc-cond \
-	--break-blocks \
-	--pad-oper \
-	--pad-comma \
-	--pad-header \
-	--align-pointer=name \
-	--break-one-line-headers \
-	$(SOURCES) \
-		db.h config.parser.h utils.h ncurses.gui.h defaults.h
+	$(Q)find . \( -name '*.c' -o -name '*.h' \) -exec ./style.sh {} ';' 
 
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
