@@ -7,17 +7,18 @@
 
 #include "ncurses.gui.h"
 
-static _key_t okcancel_keys(void) {
+static _key_t okcancel_keys(void)
+{
     static const char *keys[] = {
-        "[%bReturn%r]"
-        "[%bEsc%r]",
+        "[%bReturn%r]" "[%bEsc%r]",
         NULL
     };
 
     return keys;
 }
 
-static inline string_t trim_tail(string_t str) {
+static inline string_t trim_tail(string_t str)
+{
     int slen = strlen(str);
 
     while (isspace(str[slen - 1]) != 0)
@@ -26,7 +27,8 @@ static inline string_t trim_tail(string_t str) {
     return strndup(str, slen);
 }
 
-int wattrpr(WINDOW *win, int y, int x, const char *s) {
+int wattrpr(WINDOW * win, int y, int x, const char *s)
+{
     int attr = 0, slen = 0;
     wmove(win, y, x);
 
@@ -53,12 +55,12 @@ int wattrpr(WINDOW *win, int y, int x, const char *s) {
     return slen;
 }
 
-int GUI_FUNCTION(open_newpad, const char *message, int area) {
+int GUI_FUNCTION(open_newpad, const char *message, int area)
+{
     WINDOW *pad;
 
     if ((message == NULL) ||
-        (height > area) ||
-        ((pad = newpad(area, width)) == NULL))
+        (height > area) || ((pad = newpad(area, width)) == NULL))
         return ERR;
 
     wprintw(pad, "%s", message);
@@ -87,7 +89,8 @@ int GUI_FUNCTION(open_newpad, const char *message, int area) {
 #define popup_getchar() wgetch(POPUP)
 static WINDOW *__popup, *__message;
 
-static int GUI_FUNCTION(open_popup, int H, const char *message, _key_t keys) {
+static int GUI_FUNCTION(open_popup, int H, const char *message, _key_t keys)
+{
     int offset, i;
 
     POPUP = newwin(height + 4, width + 2, y - 1, x - 1);
@@ -117,15 +120,16 @@ static int GUI_FUNCTION(open_popup, int H, const char *message, _key_t keys) {
     return OK;
 }
 
-static int close_popup(void) {
-    if (delwin(POPUP) == ERR ||
-        delwin(__message) == ERR)
+static int close_popup(void)
+{
+    if (delwin(POPUP) == ERR || delwin(__message) == ERR)
         return ERR;
 
     return OK;
 }
 
-int GUI_FUNCTION(open_textfile, const char *path) {
+int GUI_FUNCTION(open_textfile, const char *path)
+{
     FILE *fp;
     string_t tmp;
 
@@ -154,7 +158,8 @@ int GUI_FUNCTION(open_textfile, const char *path) {
     return ret;
 }
 
-int GUI_FUNCTION(open_message_box, const char *message, _key_t keys) {
+int GUI_FUNCTION(open_message_box, const char *message, _key_t keys)
+{
     int getch_key;
 
     if (open_popup(height, width, y, x, 0, message, keys) == ERR)
@@ -169,9 +174,8 @@ int GUI_FUNCTION(open_message_box, const char *message, _key_t keys) {
 
 string_t GUI_FUNCTION(open_input_box,
     const char *help,
-    const char *message,
-    const char *initial,
-    const char *regexp) {
+    const char *message, const char *initial, const char *regexp)
+{
 
     WINDOW *form_win;
     FORM *form;
@@ -196,7 +200,6 @@ string_t GUI_FUNCTION(open_input_box,
         free_field(fields[0]);
         goto input_box_exit;
     }
-
 #define init_field(_w, _m, _a, _o) do {         \
         set_field_buffer((_w), 0, (_m));        \
         set_field_opts((_w), (_o));             \
@@ -224,12 +227,10 @@ string_t GUI_FUNCTION(open_input_box,
     while (TRUE) {
         int getch_key = popup_getchar();
 
-        if (getch_key == KEY_RESIZE ||
-            getch_key == 27)
+        if (getch_key == KEY_RESIZE || getch_key == 27)
             break;
 
-        if (getch_key == KEY_ENTER ||
-            getch_key == '\n') {
+        if (getch_key == KEY_ENTER || getch_key == '\n') {
             if (form_driver(form, REQ_VALIDATION) != E_OK)
                 continue;
 
@@ -265,11 +266,11 @@ string_t GUI_FUNCTION(open_input_box,
     unpost_form(form);
     free_form(form);
 
-input_box_exit_form_field:
+ input_box_exit_form_field:
     free_field(fields[0]);
     free_field(fields[1]);
 
-input_box_exit:
+ input_box_exit:
     delwin(form_win);
     close_popup();
 
@@ -278,10 +279,8 @@ input_box_exit:
 
 int GUI_FUNCTION(open_radio_box,
     const char *message,
-    string_t choices[],
-    int max_row,
-    int selected,
-    int max_radio_box_row) {
+    string_t choices[], int max_row, int selected, int max_radio_box_row)
+{
 
     WINDOW *menu_win;
     MENU *menu;
@@ -293,14 +292,13 @@ int GUI_FUNCTION(open_radio_box,
         return -1;
 
     menu_win = derwin(POPUP, max_radio_box_row, width - 2,
-            height - max_radio_box_row + 1, 2);
+        height - max_radio_box_row + 1, 2);
 
     if (menu_win == NULL)
         goto radio_box_exit;
 
     for (n = 0; n < max_row; n++) {
-        items[n] = new_item(choices[n],
-                (n == selected) ? "[*]" : "[ ]");
+        items[n] = new_item(choices[n], (n == selected) ? "[*]" : "[ ]");
 
         if (items[n] == NULL)
             goto radio_box_exit_from_item;
@@ -323,12 +321,10 @@ int GUI_FUNCTION(open_radio_box,
     while (TRUE) {
         int getch_key = popup_getchar();
 
-        if (getch_key == KEY_RESIZE ||
-            getch_key == 27)
+        if (getch_key == KEY_RESIZE || getch_key == 27)
             break;
 
-        if (getch_key == KEY_ENTER ||
-            getch_key == '\n') {
+        if (getch_key == KEY_ENTER || getch_key == '\n') {
             selected = item_index(current_item(menu));
             break;
         }
@@ -355,12 +351,12 @@ int GUI_FUNCTION(open_radio_box,
     unpost_menu(menu);
     free_menu(menu);
 
-radio_box_exit_from_item:
+ radio_box_exit_from_item:
 
     while (n > 0)
         free_item(items[--n]);
 
-radio_box_exit:
+ radio_box_exit:
     delwin(menu_win);
     close_popup();
 

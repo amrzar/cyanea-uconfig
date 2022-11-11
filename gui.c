@@ -6,6 +6,7 @@
 #include "y.tab.h"
 
 static const char screen_title[] = { SCREEN_TITLE };
+
 static const char *footnote_message[] = {
     FOOTNOOTE_MESSAGE,
     NULL
@@ -33,7 +34,8 @@ static WINDOW *main_screen;
 #define screen_subwin(...) subwin(main_screen, __VA_ARGS__)
 static WINDOW *middle = NULL, *footnote = NULL;
 
-static int init_screen(void) {
+static int init_screen(void)
+{
     static int X = 0, Y = 0;
 
     if (X != COLS || Y != LINES) {
@@ -42,14 +44,13 @@ static int init_screen(void) {
         delwin(footnote);
 
         if ((middle = screen_subwin(__MAIN_MENU_HIGH,
-                        SCREEN_WIDTH,
-                        TITLE_HIGH,
-                        MARGIN_LEFT)) == NULL ||
+                    SCREEN_WIDTH,
+                    TITLE_HIGH,
+                    MARGIN_LEFT)) == NULL ||
             (footnote = screen_subwin(FOOTNOTE_HIGH,
-                        SCREEN_WIDTH,
-                        LINES - FOOTNOTE_HIGH - 1,
-                        MARGIN_LEFT)) == NULL) {
-            delwin(middle); /* ... ignore NULL. */
+                    SCREEN_WIDTH,
+                    LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT)) == NULL) {
+            delwin(middle);     /* ... ignore NULL. */
             delwin(footnote);
             return -1;
         }
@@ -60,7 +61,8 @@ static int init_screen(void) {
     return SUCCESS;
 }
 
-static int draw_screen(void) {
+static int draw_screen(void)
+{
     if (init_screen() != SUCCESS)
         return -1;
 
@@ -68,8 +70,7 @@ static int draw_screen(void) {
     wattrpr(main_screen, TITLE_LINE,
         COLS / 2 - strlen(screen_title) / 2, screen_title);
 
-    for (int i = 0; i < FOOTNOTE_HIGH ||
-        footnote_message[i] != NULL; i++)
+    for (int i = 0; i < FOOTNOTE_HIGH || footnote_message[i] != NULL; i++)
         wattrpr(footnote, i, 0, footnote_message[i]);
 
     return SUCCESS;
@@ -78,18 +79,18 @@ static int draw_screen(void) {
 #define PROMPT_MENU(_e) ((menu_t *)(_e).private)->prompt
 #define PROMPT_ITEM(_e) ((item_t *)(_e).private)->common.prompt
 static void draw_main_menu(const char *menu_title,
-    config_t choices[], int current_highlight, int choice_start) {
+    config_t choices[], int current_highlight, int choice_start)
+{
     int menu_high = 0;
     int current_row = choice_start;
 
     draw_screen();
-    werase(middle); /* ... erase previous menu. */
+    werase(middle);             /* ... erase previous menu. */
     wattron(middle, A_BOLD);
     mvwprintw(middle, 0, 0, "[-] %s", menu_title);
     wattroff(middle, A_BOLD);
 
-    while (choices[current_row].private != NULL &&
-        menu_high < MAIN_MENU_HIGH) {
+    while (choices[current_row].private != NULL && menu_high < MAIN_MENU_HIGH) {
 
         if (current_row == current_highlight)
             wattron(middle, A_STANDOUT);
@@ -120,7 +121,7 @@ static void draw_main_menu(const char *menu_title,
                 PROMPT_ITEM(choices[current_row]));
             break;
 
-        default: /* ... we never gets here! */
+        default:               /* ... we never gets here! */
             mvwprintw(middle, menu_high + 2, 0,
                 "err. unrecognised configuration item.");
         }
@@ -133,14 +134,15 @@ static void draw_main_menu(const char *menu_title,
     }
 }
 
-#define SPECIAL_KEY_BS  -1  /* ... 'Backspace' pressed. */
-#define SPECIAL_KEY_Q   -2  /* ... 'Q' pressed. */
-#define SPECIAL_KEY_H   -3  /* ... 'H' pressed. */
-#define SPECIAL_KEY_RT  -4  /* ... 'Retuen' pressed. */
-#define SPECIAL_KEY_F1  -5  /* ... 'F1' pressed. */
+#define SPECIAL_KEY_BS  -1      /* ... 'Backspace' pressed. */
+#define SPECIAL_KEY_Q   -2      /* ... 'Q' pressed. */
+#define SPECIAL_KEY_H   -3      /* ... 'H' pressed. */
+#define SPECIAL_KEY_RT  -4      /* ... 'Retuen' pressed. */
+#define SPECIAL_KEY_F1  -5      /* ... 'F1' pressed. */
 
 static int __selected_row = 0;
-static int main_menu_driver(const char *menu_title, config_t choices[]) {
+static int main_menu_driver(const char *menu_title, config_t choices[])
+{
     int choice_start = 0;
     int max_row = 0, getch_key = 0;
     int pressed_key = SPECIAL_KEY_RT;
@@ -160,8 +162,7 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
                 if (__selected_row > 0)
                     __selected_row--;
 
-                if (__selected_row < choice_start &&
-                    choice_start > 0)
+                if (__selected_row < choice_start && choice_start > 0)
                     choice_start--;
             }
 
@@ -205,7 +206,7 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
             clear();
             mvwprintw(main_screen, 0, 0, "%s", "Terminal is too small...");
 
-            getch(); /* ... ignore the input. */
+            getch();            /* ... ignore the input. */
         }
     }
 
@@ -224,7 +225,8 @@ static int main_menu_driver(const char *menu_title, config_t choices[]) {
 #define relloc_conf(_c, _n) __realloc((_c), (_n), sizeof(config_t))
 #define relloc_str(_c, _n) __realloc((_c), (_n), sizeof(string_t))
 
-static config_t *menu_to_config_struct(menu_t *parent) {
+static config_t *menu_to_config_struct(menu_t * parent)
+{
     static int conf_size = 0;
     static config_t *conf = NULL;
 
@@ -233,7 +235,7 @@ static config_t *menu_to_config_struct(menu_t *parent) {
     int num = 1;
 
     /* First process child menus in this menu, i.e. 'parent' and then process
-     * other items. Reuse 'conf' as menu expands but never dellocate it. */
+     * other items. Reuse 'conf' as menu expands but never deallocate it. */
 
     list_for_each_entry(menu, &parent->childs, sibling) {
         if (eval_expr(menu->dependency)) {
@@ -249,8 +251,7 @@ static config_t *menu_to_config_struct(menu_t *parent) {
     }
 
     list_for_each_entry(item, &parent->entries, list) {
-        if (item->common.prompt != NULL &&
-            eval_expr(item->common.dependency)) {
+        if (item->common.prompt != NULL && eval_expr(item->common.dependency)) {
             struct extended_token *etoken;
 
             if (++num > conf_size) {
@@ -279,7 +280,8 @@ static config_t *menu_to_config_struct(menu_t *parent) {
     return conf;
 }
 
-static int open_radio_item(item_t *item) {
+static int open_radio_item(item_t * item)
+{
     struct token_list *tp;
 
     int num = 0, selected = -1;
@@ -293,18 +295,19 @@ static int open_radio_item(item_t *item) {
 
         if (etoken->token.ttype == TT_INTEGER) {
             choices[num - 1] = alloca(64);
-            snprintf (choices[num - 1], 64,
+            snprintf(choices[num - 1], 64,
                 etoken->token.info.number.base == 16 ? "0x%X" : "%d",
                 etoken->token.TK_INTEGER);
 
-        } else /* and TT_DESCRIPTION. */
+        } else                  /* and TT_DESCRIPTION. */
             choices[num - 1] = etoken->token.TK_STRING;
 
         if (etoken->flags & TK_LIST_EF_SELECTED)
             selected = num - 1;
     }
 
-    selected = screen_radio_box("", choices, num, selected, (num > 5) ? 5 : num);
+    selected =
+        screen_radio_box("", choices, num, selected, (num > 5) ? 5 : num);
 
     if (selected != -1)
         toggle_choice(item, choices[selected]);
@@ -314,7 +317,8 @@ static int open_radio_item(item_t *item) {
     return SUCCESS;
 }
 
-int start_gui(int nr_pages) {
+int start_gui(int nr_pages)
+{
     int pressed_key, ret = SUCCESS, index = 0;
 
 #define cur_config config[__selected_row]
@@ -343,8 +347,8 @@ int start_gui(int nr_pages) {
         }
 
         pressed_key = main_menu_driver((pages[index]->prompt == NULL) ?
-                /* ... menu title: 'Options' as main title. */
-                "Options" : pages[index]->prompt, config);
+            /* ... menu title: 'Options' as main title. */
+            "Options" : pages[index]->prompt, config);
 
         switch (pressed_key) {
         case SPECIAL_KEY_BS:
@@ -367,8 +371,8 @@ int start_gui(int nr_pages) {
                 };
 
                 int d = open_message_box(2, 90,
-                        LINES / 2, COLS / 2 - 45,
-                        exit_message, exit_message_buttons);
+                    LINES / 2, COLS / 2 - 45,
+                    exit_message, exit_message_buttons);
 
                 if (d == 'x') {
                     ret = -1;
@@ -376,13 +380,13 @@ int start_gui(int nr_pages) {
                 }
 
                 else if (d == 'S' || d == 's') {
-                    goto end_gui; /* ... return SUCCESS. */
+                    goto end_gui;       /* ... return SUCCESS. */
 
                 } else if (d == 'C' || d == 'c' || d == 27)
                     break;
 
                 else if (d == KEY_RESIZE)
-                    break; /* ... terminal resized. */
+                    break;      /* ... terminal resized. */
             }
 
             break;
@@ -404,7 +408,7 @@ int start_gui(int nr_pages) {
                 TITLE_HIGH, MARGIN_LEFT, "README.md");
             break;
 
-        default: /* Process 'SPECIAL_KEY_RT' ... */
+        default:               /* Process 'SPECIAL_KEY_RT' ... */
             if (cur_config.t == CONF_MENU)
                 pages[++index] = cur_config.private;
 
@@ -424,13 +428,13 @@ int start_gui(int nr_pages) {
                     char tmp[64];
 
                     if (etoken->token.info.number.base == 16) {
-                        snprintf (tmp, 64, "0x%X", etoken->token.TK_INTEGER);
+                        snprintf(tmp, 64, "0x%X", etoken->token.TK_INTEGER);
                         input = screen_input_box("",
-                                item->common.prompt, tmp, "^0x[a-fA-F0-9]* *$");
+                            item->common.prompt, tmp, "^0x[a-fA-F0-9]* *$");
                     } else {
-                        snprintf (tmp, 64, "%d", etoken->token.TK_INTEGER);
+                        snprintf(tmp, 64, "%d", etoken->token.TK_INTEGER);
                         input = screen_input_box("",
-                                item->common.prompt, tmp, "^[0-9]* *$");
+                            item->common.prompt, tmp, "^[0-9]* *$");
                     }
 
                     if (input != NULL) {
@@ -438,20 +442,20 @@ int start_gui(int nr_pages) {
                     }
 
                     free(input);
-                } else { /* and TT_DESCRIPTION. */
+                } else {        /* and TT_DESCRIPTION. */
                     input = screen_input_box("",
-                            item->common.prompt, etoken->token.TK_STRING, "");
+                        item->common.prompt, etoken->token.TK_STRING, "");
 
                     if (input != NULL) {
                         toggle_config(item, input);
                     }
                 }
-            } else /* and 'CONF_RADIO'. */
+            } else              /* and 'CONF_RADIO'. */
                 open_radio_item(cur_config.private);
         }
     }
 
-end_gui:
+ end_gui:
     free(config);
     free(pages);
 

@@ -11,9 +11,10 @@ extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
 extern void init_symbol_hash_table(void);
 
-static void print_help(char *pname) {
+static void print_help(char *pname)
+{
     printf("\nUse: %s [OPTIONS]\n", pname);
-    printf("  [--dump]             creates default '.old.config' from the input config file\n");
+    printf("  [--dump]             creates default '.old.config'\n");
     printf("  [--gui]              open the GUI\n");
     printf("  [--config file]      choose input config file\n");
     printf("  [--sys-config file]  choose output autoconfig file\n");
@@ -21,7 +22,8 @@ static void print_help(char *pname) {
 
 int gen_old_config = 0, need_gui = 0;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
 
     while (1) {
@@ -33,13 +35,13 @@ int main(int argc, char *argv[]) {
             {"help", required_argument, NULL, 'h'}
         };
 
-        int c = getopt_long (argc, argv, "", long_options, NULL);
+        int c = getopt_long(argc, argv, "", long_options, NULL);
 
         if (c == -1)
             break;
 
         switch (c) {
-        case 0: /* ... option sets a flag, do nothing here. */
+        case 0:
             break;
 
         case 'i':

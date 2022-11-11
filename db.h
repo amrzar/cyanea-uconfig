@@ -19,7 +19,7 @@ typedef struct menu {
 
 struct config_file {
     string_t file;
-    menu_t *menu;       /* ... menu, the config file included in. */
+    menu_t *menu;               /* ... menu, the config file included in. */
 
     struct list_head node;
 };
@@ -28,10 +28,10 @@ extern menu_t main_menu, *curr_menu;
 extern struct list_head config_files;
 
 struct entry {
-    string_t prompt;   /* ... entry's prompt string. */
-    string_t symbol;   /* ... entry's configuration symbol. */
-    expr_t dependency; /* ... dependency tree for this symbol. */
-    string_t help;     /* ... help statements. */
+    string_t prompt;            /* ... entry's prompt string. */
+    string_t symbol;            /* ... entry's configuration symbol. */
+    expr_t dependency;          /* ... dependency tree for this symbol. */
+    string_t help;              /* ... help statements. */
 };
 
 #define TK_LIST_EF_NULL 0
@@ -73,7 +73,8 @@ typedef struct item {
     struct hlist_node hnode;
 } item_t;
 
-static inline struct extended_token *item_get_config_etoken(item_t *item) {
+static inline struct extended_token *item_get_config_etoken(item_t * item)
+{
     struct extended_token *etoken = item_token_list_entry(item->tk_list);
     return etoken->flags & TK_LIST_EF_CONFIG ? etoken : NULL;
 }
@@ -86,7 +87,8 @@ extern int __populate_config_file(const char *, unsigned long);
 extern int read_config_file(const char *);
 
 extern void fprintf_menu(FILE *, menu_t *);
-static inline int build_autoconfig(const char *filename) {
+static inline int build_autoconfig(const char *filename)
+{
     FILE *fp;
 
     if ((fp = fopen(filename, "w+")) == NULL)
@@ -102,7 +104,8 @@ static inline int build_autoconfig(const char *filename) {
 }
 
 extern void __toggle_choice(struct extended_token *, string_t);
-static inline void toggle_choice(item_t *item, string_t n) {
+static inline void toggle_choice(item_t * item, string_t n)
+{
     struct token_list *tp;
 
     item_token_list_for_each(tp, item) {

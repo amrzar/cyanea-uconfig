@@ -21,19 +21,23 @@ struct list_head {
 };
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
-static inline void INIT_LIST_HEAD(struct list_head *entry) {
+static inline void INIT_LIST_HEAD(struct list_head *entry)
+{
     entry->next = entry->prev = entry;
 }
 
 static inline void list_add(struct list_head *entry,
-    struct list_head *prev, struct list_head *next) {
-    next->prev  = entry;
+    struct list_head *prev, struct list_head *next)
+{
+    next->prev = entry;
     entry->next = next;
     entry->prev = prev;
-    prev->next  = entry;
+    prev->next = entry;
 }
 
-static inline void list_add_tail(struct list_head *entry, struct list_head *head) {
+static inline void list_add_tail(struct list_head *entry,
+    struct list_head *head)
+{
     list_add(entry, head->prev, head);
 }
 
@@ -61,17 +65,20 @@ struct hlist_head {
 };
 
 struct hlist_node {
-    struct hlist_node *next, * *pprev;
+    struct hlist_node *next, **pprev;
 };
 
 #define HLIST_HEAD_INIT { .first = NULL }
 #define INIT_HLIST_HEAD(head) ((head)->first = NULL)
-static inline void INIT_HLIST_NODE(struct hlist_node *entry) {
-    entry->next  = NULL;
+static inline void INIT_HLIST_NODE(struct hlist_node *entry)
+{
+    entry->next = NULL;
     entry->pprev = NULL;
 }
 
-static inline void hlist_add_head(struct hlist_node *entry, struct hlist_head *head) {
+static inline void hlist_add_head(struct hlist_node *entry,
+    struct hlist_head *head)
+{
     struct hlist_node *first = head->first;
     entry->next = first;
 

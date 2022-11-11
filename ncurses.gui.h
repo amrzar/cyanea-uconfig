@@ -38,8 +38,10 @@ extern int GUI_FUNCTION(open_newpad, const char *, int);
 
 extern int GUI_FUNCTION(open_textfile, const char *);
 extern int GUI_FUNCTION(open_message_box, const char *, _key_t);
-extern string_t GUI_FUNCTION(open_input_box, const char *, const char *, const char *, const char *);
-extern int GUI_FUNCTION(open_radio_box, const char *, string_t[], int, int, int);
+extern string_t GUI_FUNCTION(open_input_box, const char *, const char *,
+    const char *, const char *);
+extern int GUI_FUNCTION(open_radio_box, const char *, string_t[], int, int,
+    int);
 
 #define screen_input_box(_h, _p, _d, _r)                                    \
     open_input_box(MAIN_MENU_HIGH, SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT,   \
