@@ -12,7 +12,7 @@
 
 menu_t main_menu = {
     NULL,
-    NULL,                       /* ... always true. */
+    NULL,
     LIST_HEAD_INIT(main_menu.entries),
     LIST_HEAD_INIT(main_menu.childs),
     LIST_HEAD_INIT(main_menu.sibling)
@@ -43,7 +43,7 @@ static unsigned long hash_symbol(string_t symbol)
 static item_t *hash_get_item(string_t symbol)
 {
     item_t *item;
-    hlist_for_each_entry(item, &symtable[hash_symbol(symbol)], hnode) {
+    hlist_for_each_entry(item, &symtable[hash_symbol(symbol)], node) {
         if (strcmp(item->common.symbol, symbol) == 0)
             return item;
     }
@@ -56,27 +56,8 @@ static int hash_add_item(item_t * item, string_t symbol)
     if (hash_get_item(symbol) != NULL)
         return -1;
 
-    hlist_add_head(&item->hnode, &symtable[hash_symbol(symbol)]);
+    hlist_add_head(&item->node, &symtable[hash_symbol(symbol)]);
     return SUCCESS;
-}
-
-static token_t hash_get_token(string_t symbol)
-{
-    item_t *item;
-    struct token_list *tp;
-
-    if ((item = hash_get_item(symbol)) != NULL) {
-        item_token_list_for_each(tp, item) {
-            struct extended_token *etoken = item_token_list_entry(tp);
-
-            if (etoken->flags & /* ... config or selected token. */
-                (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED))
-                return etoken->token;
-        }
-    }
-
-    return (token_t) {
-    .ttype = TT_INVALID};
 }
 
 int push_menu(token_t token, expr_t expr)
@@ -122,7 +103,7 @@ struct token_list *next_token(struct token_list *token1,
          * Condition for 'etoken' must be stored as a separate token list
          * retrieved from variable arguments. * */
 
-        if (flags == TK_LIST_EF_NULL || flags & TK_LIST_EF_DEFAULT)
+        if ((flags == TK_LIST_EF_NULL) || (flags & TK_LIST_EF_DEFAULT))
             etoken->token = va_arg(valist, token_t);
 
         /* 'token1' is the tail of token list from last call. */
@@ -152,69 +133,68 @@ static inline int init_entry(struct entry *entry,
 int add_new_config_entry(token_t token1, token_t token2,
     token_t token3, struct token_list *token4, expr_t expr, token_t token5)
 {
-    item_t *item;
-
     /* Restrict 'select' keyword to only 'TT_BOOL'. */
-    if (token4 != NULL && token3.ttype != TT_BOOL)
+    if ((token4 != NULL) && (token3.ttype != TT_BOOL))
         return -1;
 
-    if ((item = malloc(sizeof(item_t))) != NULL) {
-        INIT_LIST_HEAD(&item->list);
-        INIT_HLIST_NODE(&item->hnode);
+    item_t *item = malloc(sizeof(item_t));
 
-        if (init_entry(&item->common, token1, token2, token5, expr) == -1)
-            return -1;
+    if (item == NULL)
+        return -1;
 
-        /* Store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
-        if ((item->tk_list = next_token(token4,
-                    TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT, token3)) == NULL)
-            return -1;
+    INIT_LIST_HEAD(&item->list);
+    INIT_HLIST_NODE(&item->node);
 
-        item->refcount = 0;
-        list_add_tail(&item->list, &curr_menu->entries);
+    if (init_entry(&item->common, token1, token2, token5, expr) == -1)
+        return -1;
 
-        if (hash_add_item(item, token2.TK_STRING) == -1) {
-            error_print("%s symbol exists.\n", token2.TK_STRING);
-            return -1;
-        }
+    /* Store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
+    if ((item->tk_list =
+            next_token(token4, (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT),
+                token3)) == NULL)
+        return -1;
 
-        return SUCCESS;
+    item->refcount = 0;
+    list_add_tail(&item->list, &curr_menu->entries);
+
+    if (hash_add_item(item, token2.TK_STRING) == -1) {
+        error_print("%s symbol exists.\n", token2.TK_STRING);
+        return -1;
     }
 
-    return -1;
+    return SUCCESS;
 }
 
 int add_new_choice_entry(token_t token1, token_t token2,
     struct token_list *token3, expr_t expr, token_t token4)
 {
-    item_t *item;
+    item_t *item = malloc(sizeof(item_t));
 
-    if ((item = malloc(sizeof(item_t))) != NULL) {
-        INIT_LIST_HEAD(&item->list);
-        INIT_HLIST_NODE(&item->hnode);
+    if (item == NULL)
+        return -1;
 
-        if (init_entry(&item->common, token1, token2, token4, expr) == -1)
-            return -1;
+    INIT_LIST_HEAD(&item->list);
+    INIT_HLIST_NODE(&item->node);
 
-        item->tk_list = token3;
-        list_add_tail(&item->list, &curr_menu->entries);
+    if (init_entry(&item->common, token1, token2, token4, expr) == -1)
+        return -1;
 
-        if (hash_add_item(item, token2.TK_STRING) == -1) {
-            error_print("%s symbol exists.\n", token2.TK_STRING);
-            return -1;
-        }
+    item->tk_list = token3;
+    list_add_tail(&item->list, &curr_menu->entries);
 
-        return SUCCESS;
+    if (hash_add_item(item, token2.TK_STRING) == -1) {
+        error_print("%s symbol exists.\n", token2.TK_STRING);
+        return -1;
     }
 
-    return -1;
+    return SUCCESS;
 }
 
 int add_new_config_file(token_t token1)
 {
-    struct config_file *cfg_file;
+    struct config_file *cfg_file = malloc(sizeof(struct config_file));
 
-    if ((cfg_file = malloc(sizeof(struct config_file))) != NULL) {
+    if (cfg_file != NULL) {
         cfg_file->file = token1.TK_STRING;
         cfg_file->menu = curr_menu;
 
@@ -228,13 +208,12 @@ int add_new_config_file(token_t token1)
 
 expr_t add_expr_op(enum expr_op op, ...)
 {
-    va_list valist;
-    expr_t expr;
+    expr_t expr = malloc(sizeof(struct expr));
 
-    if ((expr = malloc(sizeof(struct expr))) == NULL) {
+    if (expr == NULL)
         return NULL;
-    }
 
+    va_list valist;
     va_start(valist, op);
 
     switch (op) {
@@ -268,9 +247,25 @@ expr_t add_expr_op(enum expr_op op, ...)
     return expr;
 }
 
+static token_t hash_get_token(string_t symbol)
+{
+    struct extended_token *etoken;
+    item_t *item = hash_get_item(symbol);
+
+    if ((item != NULL) && eval_expr(item->common.dependency)) {
+        item_token_list_for_each_entry(etoken, item) {
+            if (etoken->flags & (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED))
+                return etoken->token;
+        }
+    }
+
+    return ((token_t) {
+        .ttype = TT_INVALID}
+    );
+}
+
 static bool __eval_expr(token_t token1, token_t token2, enum expr_op op)
 {
-
     switch (token1.ttype) {
     case TT_BOOL:
         if (op == OP_EQUAL)
@@ -308,9 +303,7 @@ static bool __eval_expr(token_t token1, token_t token2, enum expr_op op)
 
 bool eval_expr(expr_t expr)
 {
-    item_t *item;
-    struct extended_token *etoken;
-    token_t token1, token2;
+    token_t token, token1, token2;
 
     /* No 'depends' keyword, always success. */
     if (expr == NULL)
@@ -318,19 +311,18 @@ bool eval_expr(expr_t expr)
 
     switch (expr->op) {
     case OP_NULL:
-        if ((item = hash_get_item(expr->NODE.token.TK_STRING)) != NULL) {
-            if (((etoken = item_get_config_etoken(item)) != NULL) &&
-                (etoken->token.ttype == TT_BOOL)) {
+        token = expr->NODE.token;
 
-                /* Only return 'TK_BOOL' if item's dependency is satisfied. */
-                return eval_expr(item->common.dependency) &&
-                    etoken->token.TK_BOOL;
+        if (token.ttype == TT_SYMBOL) {
+            token = hash_get_token(token.TK_STRING);
+
+            if ((token.ttype == TT_INVALID) || (token.ttype != TT_BOOL)) {
+                debug_print("Broken dependency: %s.\n", token.TK_STRING);
+                break;
             }
         }
 
-        debug_print("Undefined or incompatible dependency: %s.\n",
-            expr->NODE.token.TK_STRING);
-        break;
+        return token.TK_BOOL;
 
     case OP_EQUAL:
     case OP_NEQUAL:
@@ -342,7 +334,7 @@ bool eval_expr(expr_t expr)
             token1 = hash_get_token(token1.TK_STRING);
 
             if (token1.ttype == TT_INVALID) {
-                debug_print("Undefined dependency: %s.\n", token1.TK_STRING);
+                debug_print("Broken dependency: %s.\n", token1.TK_STRING);
                 break;
             }
         }
@@ -351,7 +343,7 @@ bool eval_expr(expr_t expr)
             token2 = hash_get_token(token2.TK_STRING);
 
             if (token2.ttype == TT_INVALID) {
-                debug_print("Undefined dependency: %s.\n", token2.TK_STRING);
+                debug_print("Broken dependency: %s.\n", token2.TK_STRING);
                 break;
             }
         }
@@ -379,51 +371,53 @@ bool eval_expr(expr_t expr)
     return false;
 }
 
-void fprintf_menu(FILE * fp, menu_t * menu)
+int fprintf_menu(FILE * fp, menu_t * menu)
 {
     menu_t *m;
     item_t *item;
 
-    if (eval_expr(menu->dependency)) {
-        /* Handle childs, first. */
-        list_for_each_entry(m, &menu->childs, sibling) {
-            fprintf_menu(fp, m);
-        }
+    if (!eval_expr(menu->dependency))
+        return -1;
 
-        list_for_each_entry(item, &menu->entries, list) {
-            if (eval_expr(item->common.dependency)) {
+    /* Handle childs, first. */
+    list_for_each_entry(m, &menu->childs, sibling) {
+        fprintf_menu(fp, m);
+    }
 
-                struct token_list *tp;
-                item_token_list_for_each(tp, item) {
-                    struct extended_token *etoken = item_token_list_entry(tp);
+    list_for_each_entry(item, &menu->entries, list) {
+        if (!eval_expr(item->common.dependency))
+            continue;
 
-                    if (etoken->flags &
-                        (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
-                        if (etoken->token.ttype == TT_BOOL) {
+        struct extended_token *etoken;
+        item_token_list_for_each_entry(etoken, item) {
 
-                            /* Assume 'false' as undefined symbol. */
-                            if (etoken->token.TK_BOOL == true)
-                                fprintf(fp, "#define %s y\n",
-                                    item->common.symbol);
+            if (etoken->flags & (TK_LIST_EF_CONFIG | TK_LIST_EF_SELECTED)) {
+                if (etoken->token.ttype == TT_BOOL) {
 
-                        } else if (etoken->token.ttype == TT_INTEGER)
-                            fprintf(fp, "#define %s %d\n", item->common.symbol,
-                                etoken->token.TK_INTEGER);
+                    /* Assume 'false' as undefined symbol. */
+                    if (etoken->token.TK_BOOL == true)
+                        fprintf(fp, "#define %s y\n", item->common.symbol);
 
-                        else if (etoken->token.ttype == TT_DESCRIPTION)
-                            fprintf(fp, "#define %s %s\n", item->common.symbol,
-                                etoken->token.TK_STRING);
-                    }
+                } else if (etoken->token.ttype == TT_INTEGER) {
+                    fprintf(fp, "#define %s %d\n", item->common.symbol,
+                        etoken->token.TK_INTEGER);
+
+                } else if (etoken->token.ttype == TT_DESCRIPTION) {
+                    fprintf(fp, "#define %s %s\n", item->common.symbol,
+                        etoken->token.TK_STRING);
                 }
             }
         }
+
     }
+
+    return SUCCESS;
 }
 
 int __populate_config_file(const char *filename, unsigned long flags)
 {
     item_t *item;
-    struct token_list *tp;
+    struct extended_token *etoken;
     FILE *fp;
 
     int fd;
@@ -441,29 +435,33 @@ int __populate_config_file(const char *filename, unsigned long flags)
 
     fprintf(fp, "# THIS IS AN AUTO-GENERATED FILE: DO NOT EDIT.\n");
 
+    /* Dump every items to 'fp' based on 'flags'. */
     for (int i = 0; i < SYMTABLE; i++) {
-
-        /* ... dump every items to be able to restore. */
-        hlist_for_each_entry(item, &symtable[i], hnode) {
+        hlist_for_each_entry(item, &symtable[i], node) {
             fprintf(fp, "%s ", item->common.symbol);
 
-            item_token_list_for_each(tp, item) {
-                struct extended_token *etoken = item_token_list_entry(tp);
+            item_token_list_for_each_entry(etoken, item) {
 
                 if (etoken->flags & flags) {
-                    if (etoken->token.ttype == TT_BOOL)
+                    switch (etoken->token.ttype) {
+                    case TT_BOOL:
                         fprintf(fp, "%s\n",
                             etoken->token.TK_BOOL ? "true" : "false");
+                        break;
 
-                    else if (etoken->token.ttype == TT_INTEGER)
+                    case TT_INTEGER:
                         fprintf(fp, "%d\n", etoken->token.TK_INTEGER);
+                        break;
 
-                    else if (etoken->token.ttype == TT_DESCRIPTION)
+                    case TT_DESCRIPTION:
                         fprintf(fp, "%s\n", etoken->token.TK_STRING);
+                        break;
 
-                    else
+                    default:
                         /* ... only when 'flag' is -1. */
                         fprintf(fp, "undefined.\n");
+
+                    }
 
                     break;
                 }
@@ -480,14 +478,23 @@ static void update_select_token_list(struct token_list *head, bool n)
     item_t *item;
     struct token_list *tp;
 
-    token_list_for_each(tp, head) {     /* ... handle selects, if any. */
+    /* Handle entries in 'selects' list, if any ... */
+    token_list_for_each(tp, head) {
         struct extended_token *e, *etoken = item_token_list_entry(tp);
 
         if ((item = hash_get_item(etoken->token.TK_STRING)) != NULL) {
 
+            /* ... if entry is of 'TT_BOOL' type, toggle it as needed. */
             if (((e = item_get_config_etoken(item)) != NULL) &&
                 (e->token.ttype == TT_BOOL)) {
+
                 if (n == true) {
+
+                    /* If 'TK_LIST_EF_DEFAULT' is set, then we have not
+                     * processed this item in 'read_config_file' yet. We do
+                     * not update the state to 'true' even if it is 'false'.
+                     * 'read_config_file' should handle it. **/
+
                     if (e->flags & TK_LIST_EF_DEFAULT ||
                         e->token.TK_BOOL == true)
                         item_inc(item);
@@ -516,10 +523,10 @@ static void update_select_token_list(struct token_list *head, bool n)
 
 void __toggle_choice(struct extended_token *etoken, string_t n)
 {
-    if ((etoken->token.ttype == TT_INTEGER &&
-            etoken->token.TK_INTEGER == atoi(n)) ||
-        (etoken->token.ttype == TT_DESCRIPTION &&
-            strcmp(etoken->token.TK_STRING, n) == 0)) {
+    if (((etoken->token.ttype == TT_INTEGER) &&
+            (etoken->token.TK_INTEGER == atoi(n))) ||
+        ((etoken->token.ttype == TT_DESCRIPTION) &&
+            (strcmp(etoken->token.TK_STRING, n) == 0))) {
 
         etoken->flags |= TK_LIST_EF_SELECTED;
     }
@@ -553,7 +560,7 @@ void toggle_config(item_t * item, ...)
 int read_config_file(const char *filename)
 {
     item_t *item;
-    struct token_list *tp;
+    struct extended_token *etoken;
 
     FILE *fp;
     string_t symbol = NULL, value;
@@ -564,7 +571,7 @@ int read_config_file(const char *filename)
 
     while (getline(&symbol, &n, fp) != -1) {
         if (symbol[0] == '#')
-            continue;           /* ... ignore comments. */
+            continue;
 
         string_t tmp = strstr(symbol, "\n");
 
@@ -575,70 +582,68 @@ int read_config_file(const char *filename)
         tmp[0] = '\0';
         value = &tmp[1];
 
-        if ((item = hash_get_item(symbol)) != NULL) {
-            item_token_list_for_each(tp, item) {
-                struct extended_token *etoken = item_token_list_entry(tp);
+        if ((item = hash_get_item(symbol)) == NULL) {
+            debug_print("Undefined symbol: %s.\n", symbol);
+            continue;
+        }
 
-                if (etoken->flags & TK_LIST_EF_CONFIG) {
-                    /* ... 'TK_LIST_EF_DEFAULT' is always set. */
+        item_token_list_for_each_entry(etoken, item) {
 
-                    if (etoken->token.ttype == TT_BOOL) {
-                        int tmp = strncmp(value, "true", 4);
+            if (etoken->flags & TK_LIST_EF_CONFIG) {
+                /* ... 'TK_LIST_EF_DEFAULT' is always set. */
 
-                        if (etoken->token.TK_BOOL == true) {
+                if (etoken->token.ttype == TT_BOOL) {
+                    int tmp = strncmp(value, "true", 4);
 
-                            /* Here, 'refcount' represents number of times other
-                             * configuration items selected this item, e.g. 'refcount == 2'
-                             * means this item has been selected 2 times so far.
-                             *
-                             * We only change 'TK_BOOL' to false if 'refcount' is zero.
-                             * As 'TK_LIST_EF_DEFAULT' is set, i.e. it has not been processed before in
-                             * this function, changing to 'false' does not case any changes
-                             * to other configuration items.
-                             *
-                             **/
+                    if (etoken->token.TK_BOOL == true) {
 
-                            if (tmp != 0) {
-                                if (item->refcount > 0)
-                                    item_dec(item);
-                                else
-                                    etoken->token.TK_BOOL = false;
-                            }
-                        } else {
-                            if (tmp != 0) {
-                                if (item->refcount > 0) {
-                                    item_dec(item);
+                        /* Here, 'refcount' represents number of times other
+                         * configuration items selected this item, e.g. 'refcount == 2'
+                         * means this item has been selected 2 times so far.
+                         *
+                         * We only change 'TK_BOOL' to false if 'refcount' is zero.
+                         * As 'TK_LIST_EF_DEFAULT' is set, i.e. it has not been
+                         * processed before in this function, changing to 'false'
+                         * does not case any changes to other configuration items. **/
 
-                                    /* We should leave this item as 'false', Here. But as 'refcount' is
-                                     * already greater than zero, this item has been selected before, so
-                                     * we set it to 'true' instead.
-                                     *
-                                     **/
-
-                                    etoken->token.TK_BOOL = true;
-                                }
-                            } else
-                                etoken->token.TK_BOOL = true;
+                        if (tmp != 0) {
+                            if (item->refcount > 0)
+                                item_dec(item);
+                            else
+                                etoken->token.TK_BOOL = false;
                         }
+                    } else {
+                        if (tmp != 0) {
+                            if (item->refcount > 0) {
+                                item_dec(item);
 
-                        if (etoken->token.TK_BOOL == true)
-                            update_select_token_list(tp->next, true);
+                                /* We should leave this item as 'false', Here.
+                                 * But as 'refcount' is already greater than zero,
+                                 * this item has been selected before, so we set
+                                 * it to 'true' instead. **/
 
-                    } else if (etoken->token.ttype == TT_INTEGER)
-                        etoken->token.TK_INTEGER = atoi(value);
-
-                    else {      /* and TT_DESCRIPTION. */
-                        free(etoken->token.TK_STRING);
-                        etoken->token.TK_STRING = strdup(value);
+                                etoken->token.TK_BOOL = true;
+                            }
+                        } else
+                            etoken->token.TK_BOOL = true;
                     }
 
-                    etoken->flags &= ~TK_LIST_EF_DEFAULT;
-                    break;      /* ... try next line. */
-                } else
-                    __toggle_choice(etoken, value);
-            }
-        } else
-            debug_print("Undefined symbol: %s.\n", symbol);
+                    if (etoken->token.TK_BOOL == true)
+                        update_select_token_list(etoken->node.next, true);
+
+                } else if (etoken->token.ttype == TT_INTEGER)
+                    etoken->token.TK_INTEGER = atoi(value);
+
+                else {          /* and TT_DESCRIPTION. */
+                    free(etoken->token.TK_STRING);
+                    etoken->token.TK_STRING = strdup(value);
+                }
+
+                etoken->flags &= ~TK_LIST_EF_DEFAULT;
+                break;          /* ... try next line. */
+            } else
+                __toggle_choice(etoken, value);
+        }
     }
 
     fclose(fp);

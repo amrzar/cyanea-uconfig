@@ -66,17 +66,25 @@ typedef struct item {
      **/
 
     struct token_list *tk_list;
-#define item_token_list_for_each(pos, _i) token_list_for_each(pos, (_i)->tk_list)
-#define item_token_list_entry(tp) container_of((tp), struct extended_token, node)
+
+#define item_token_list_entry(ptr) \
+    ({ typeof(ptr) ____ptr  = (ptr); \
+        ____ptr ? container_of(____ptr , struct extended_token, node) : NULL; \
+    })
+
+#define item_token_list_for_each_entry(pos, i) \
+    for (pos = item_token_list_entry((i)->tk_list); \
+        pos != NULL; \
+        pos = item_token_list_entry(pos->node.next))
 
     struct list_head list;
-    struct hlist_node hnode;
+    struct hlist_node node;
 } item_t;
 
 static inline struct extended_token *item_get_config_etoken(item_t * item)
 {
-    struct extended_token *etoken = item_token_list_entry(item->tk_list);
-    return etoken->flags & TK_LIST_EF_CONFIG ? etoken : NULL;
+    struct extended_token *e = item_token_list_entry(item->tk_list);
+    return e->flags & TK_LIST_EF_CONFIG ? e : NULL;
 }
 
 extern int __populate_config_file(const char *, unsigned long);
@@ -86,7 +94,7 @@ extern int __populate_config_file(const char *, unsigned long);
 
 extern int read_config_file(const char *);
 
-extern void fprintf_menu(FILE *, menu_t *);
+extern int fprintf_menu(FILE *, menu_t *);
 static inline int build_autoconfig(const char *filename)
 {
     FILE *fp;
@@ -106,11 +114,9 @@ static inline int build_autoconfig(const char *filename)
 extern void __toggle_choice(struct extended_token *, string_t);
 static inline void toggle_choice(item_t * item, string_t n)
 {
-    struct token_list *tp;
+    struct extended_token *etoken;
 
-    item_token_list_for_each(tp, item) {
-        struct extended_token *etoken = item_token_list_entry(tp);
-
+    item_token_list_for_each_entry(etoken, item) {
         /* ... remove 'TK_LIST_EF_SELECTED', first. */
         etoken->flags &= ~TK_LIST_EF_SELECTED;
         __toggle_choice(etoken, n);

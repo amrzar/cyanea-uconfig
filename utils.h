@@ -92,12 +92,12 @@ static inline void hlist_add_head(struct hlist_node *entry,
 
 #define hlist_entry_safe(ptr, type, member) \
     ({ typeof(ptr) ____ptr  = (ptr); \
-        ____ptr  ? container_of(____ptr , type, member) : NULL; \
+        ____ptr ? container_of(____ptr , type, member) : NULL; \
     })
 
 #define hlist_for_each_entry(pos, head, member) \
     for (pos = hlist_entry_safe((head)->first, typeof(*(pos)), member); \
-        pos; \
+        pos != NULL; \
         pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
 
 #define debug_print(...) fprintf(stderr, "[debug_print] " __VA_ARGS__)
