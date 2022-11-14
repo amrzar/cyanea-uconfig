@@ -4,7 +4,7 @@
 #define __DB_H__
 
 #include "config.parser.h"
-#include "utils.h"
+#include "queue.h"
 
 #define SUCCESS 0
 
@@ -13,21 +13,21 @@ typedef struct menu {
     expr_t dependency;
 
     /* ... list of items in the menu. */
-    struct list_head entries;
-    struct list_head childs, sibling;
+    LIST_HEAD entries;
+    LIST_HEAD childs, sibling;
 } menu_t;
 
-struct config_file {
+struct include {
     string_t file;
     menu_t *menu;               /* ... menu, the config file included in. */
 
-    struct list_head node;
+    LIST_HEAD node;
 };
 
 extern menu_t main_menu, *curr_menu;
-extern struct list_head config_files;
+extern LIST_HEAD files;
 
-struct entry {
+struct item_shared {
     string_t prompt;            /* ... entry's prompt string. */
     string_t symbol;            /* ... entry's configuration symbol. */
     expr_t dependency;          /* ... dependency tree for this symbol. */
@@ -48,7 +48,7 @@ struct extended_token {
 };
 
 typedef struct item {
-    struct entry common;
+    struct item_shared common;
 
     unsigned long refcount;
 #define item_inc(_i) (_i)->refcount++
@@ -77,14 +77,14 @@ typedef struct item {
         pos != NULL; \
         pos = item_token_list_entry(pos->node.next))
 
-    struct list_head list;
-    struct hlist_node node;
+    LIST_HEAD node;
+    LIST_HEAD sym_node;
 } item_t;
 
-static inline struct extended_token *item_get_config_etoken(item_t * item)
+static inline struct extended_token *item_get_config_et(item_t * item)
 {
-    struct extended_token *e = item_token_list_entry(item->tk_list);
-    return e->flags & TK_LIST_EF_CONFIG ? e : NULL;
+    struct extended_token *et = item_token_list_entry(item->tk_list);
+    return et->flags & TK_LIST_EF_CONFIG ? et : NULL;
 }
 
 extern int __populate_config_file(const char *, unsigned long);
@@ -114,12 +114,12 @@ static inline int build_autoconfig(const char *filename)
 extern void __toggle_choice(struct extended_token *, string_t);
 static inline void toggle_choice(item_t * item, string_t n)
 {
-    struct extended_token *etoken;
+    struct extended_token *et;
 
-    item_token_list_for_each_entry(etoken, item) {
+    item_token_list_for_each_entry(et, item) {
         /* ... remove 'TK_LIST_EF_SELECTED', first. */
-        etoken->flags &= ~TK_LIST_EF_SELECTED;
-        __toggle_choice(etoken, n);
+        et->flags &= ~TK_LIST_EF_SELECTED;
+        __toggle_choice(et, n);
     }
 }
 

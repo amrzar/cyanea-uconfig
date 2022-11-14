@@ -81,7 +81,7 @@ extern int GUI_OPEN(radio_box, const char *, string_t[], int, int, int);
     open_input_box(MAIN_MENU_HIGH, SCREEN_WIDTH, TITLE_HIGH, MARGIN_LEFT, \
         (help), (prompt), (str), (regex))
 
-static string_t iinput_box(const char *help, const char *prompt, integer_t i)
+static string_t int_input_box(const char *help, const char *prompt, integer_t i)
 {
     string_t input;
     char tmp[64];

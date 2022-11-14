@@ -16,4 +16,16 @@
 #define _IN_FILE "configs.in"
 #define _OUT_FILE "sys.config.h"
 
+#ifdef DEBUG
+#define debug_print(...) \
+    fprintf(stderr, "[debug_print] " __VA_ARGS__)
+#else
+#define debug_print(...)
+#endif
+
+#define error_print(...) do { \
+        fprintf(stderr, "[error_print] %s", __FUNCTION__); \
+        fprintf(stderr, __VA_ARGS__); \
+    } while (0)
+
 #endif /* __DEFAULTS_H__ */

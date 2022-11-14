@@ -239,7 +239,7 @@ static config_t *get_config(menu_t * parent)
     item_t *item;
     int num = 1;
 
-    list_for_each_entry(menu, &parent->childs, sibling) {
+    LIST_FOREACH(menu, &parent->childs, sibling) {
         if (eval_expr(menu->dependency)) {
 
             if (++num > conf_size) {
@@ -252,9 +252,9 @@ static config_t *get_config(menu_t * parent)
         }
     }
 
-    list_for_each_entry(item, &parent->entries, list) {
+    LIST_FOREACH(item, &parent->entries, node) {
         if ((item->common.prompt != NULL) && eval_expr(item->common.dependency)) {
-            struct extended_token *etoken;
+            struct extended_token *et;
 
             if (++num > conf_size) {
                 if ((conf = array_realloc(conf, num)) == NULL)
@@ -263,10 +263,9 @@ static config_t *get_config(menu_t * parent)
 
             conf[num - 2].item = item;
 
-            if ((etoken = item_get_config_etoken(item)) != NULL) {
-                if (etoken->token.ttype == TT_BOOL)
-                    conf[num - 2].t = etoken->token.TK_BOOL ?
-                        CONF_YES : CONF_NO;
+            if ((et = item_get_config_et(item)) != NULL) {
+                if (et->token.ttype == TT_BOOL)
+                    conf[num - 2].t = et->token.TK_BOOL ? CONF_YES : CONF_NO;
                 else
                     conf[num - 2].t = CONF_INPUT;
             } else
@@ -286,25 +285,25 @@ static config_t *get_config(menu_t * parent)
 static int open_radio_item(item_t * item)
 {
     string_t *choices = NULL;
-    struct extended_token *etoken;
+    struct extended_token *et;
     int num = 0, selected = -1;
 
-    item_token_list_for_each_entry(etoken, item) {
+    item_token_list_for_each_entry(et, item) {
         if ((choices = array_realloc(choices, ++num)) == NULL)
             return -1;
 
-        if (etoken->token.ttype == TT_INTEGER) {
+        if (et->token.ttype == TT_INTEGER) {
             /* ... allocate from stack to simplify the cleanup. */
             choices[num - 1] = alloca(64);
 
             snprintf(choices[num - 1], 64,
-                etoken->token.info.number.base == 16 ? "0x%X" : "%d",
-                etoken->token.TK_INTEGER);
+                et->token.info.number.base == 16 ? "0x%X" : "%d",
+                et->token.TK_INTEGER);
 
         } else                  /* and TT_DESCRIPTION. */
-            choices[num - 1] = etoken->token.TK_STRING;
+            choices[num - 1] = et->token.TK_STRING;
 
-        if (etoken->flags & TK_LIST_EF_SELECTED)
+        if (et->flags & TK_LIST_EF_SELECTED)
             selected = num - 1;
     }
 
@@ -410,27 +409,26 @@ int start_gui(int nr_pages)
 
             else if (cur_config.t == CONF_INPUT) {
                 string_t input;
-                struct extended_token *etoken =
-                    item_get_config_etoken(cur_config.item);
+                struct extended_token *et = item_get_config_et(cur_config.item);
 
-                if (etoken->token.ttype == TT_INTEGER) {
+                if (et->token.ttype == TT_INTEGER) {
                     input =
-                        iinput_box("", cur_config.item->common.prompt,
-                        etoken->token.info.number);
+                        int_input_box("", cur_config.item->common.prompt,
+                        et->token.info.number);
 
                     if (input != NULL)
                         toggle_config(cur_config.item, strtol(input, NULL, 0));
 
                 } else {        /* and TT_DESCRIPTION. */
                     input = input_box("",
-                        cur_config.item->common.prompt, etoken->token.TK_STRING,
+                        cur_config.item->common.prompt, et->token.TK_STRING,
                         "");
 
                     if (input != NULL)
                         toggle_config(cur_config.item, input);
                 }
 
-                //free(input);
+                free(input);
             } else              /* and 'CONF_RADIO'. */
                 open_radio_item(cur_config.item);
         }

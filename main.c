@@ -3,13 +3,13 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <getopt.h>
+#include <search.h>
 
 #include "db.h"
 #include "defaults.h"
 
 extern int start_gui(int);
 extern int yy_parse_file(const char *filename);
-extern void init_symbol_hash_table(void);
 
 static void print_help(char *pname)
 {
@@ -24,6 +24,7 @@ int gen_old_config = 0, need_gui = 0;
 
 int main(int argc, char *argv[])
 {
+    struct include *file;
     string_t in_filename = _IN_FILE, out_filename = _OUT_FILE;
 
     while (1) {
@@ -63,8 +64,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* ... initialise parser symbol-table. */
-    init_symbol_hash_table();
+    hcreate(256);
 
     /* ... main configuration file. */
     if (yy_parse_file(in_filename) != 0)
@@ -75,12 +75,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    struct config_file *cfg_file;
+    LIST_FOREACH(file, &files, node) {
+        curr_menu = file->menu;
 
-    list_for_each_entry(cfg_file, &config_files, node) {
-        curr_menu = cfg_file->menu;
-
-        if (yy_parse_file(cfg_file->file) != 0)
+        if (yy_parse_file(file->file) != 0)
             return -1;
     }
 
