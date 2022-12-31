@@ -516,7 +516,8 @@ static void update_select_token_list(struct token_list *head, bool n)
 void __toggle_choice(struct extended_token *et, string_t n)
 {
     if (((et->token.ttype == TT_INTEGER) &&
-            (et->token.TK_INTEGER == atoi(n))) ||
+            /* ... use ''strtol'' as string ''n'' can start with '0x...' */
+            (et->token.TK_INTEGER == strtol(n, NULL, 0))) ||
         ((et->token.ttype == TT_DESCRIPTION) &&
             (strcmp(et->token.TK_STRING, n) == 0))) {
 

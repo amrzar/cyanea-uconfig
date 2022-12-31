@@ -24,7 +24,7 @@
 #endif
 
 #define error_print(...) do { \
-        fprintf(stderr, "[error_print] %s", __FUNCTION__); \
+        fprintf(stderr, "[error_print] %s ", __FUNCTION__); \
         fprintf(stderr, __VA_ARGS__); \
     } while (0)
 
