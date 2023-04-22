@@ -289,11 +289,14 @@ static int open_radio_item(item_t * item)
     int num = 0, selected = -1;
 
     item_token_list_for_each_entry(et, item) {
-        if ((choices = array_realloc(choices, ++num)) == NULL)
+        if (!eval_expr(et->condition))
+            continue;
+
+        choices = array_realloc(choices, ++num);
+        if (choices == NULL)
             return -1;
 
         if (et->token.ttype == TT_INTEGER) {
-            /* ... allocate from stack to simplify the cleanup. */
             choices[num - 1] = alloca(64);
 
             snprintf(choices[num - 1], 64,

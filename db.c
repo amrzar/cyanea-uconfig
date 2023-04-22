@@ -91,20 +91,35 @@ struct token_list *next_token(struct token_list *token1,
 
     if ((et = alloc(struct extended_token)) != NULL) {
         et->flags = flags;
+        et->condition =  NULL;
 
-        /* TODO 'flags' may be 'TK_LIST_EF_CONDITIONAL'.
-         * Condition for 'et' must be stored as a separate token list
-         * retrieved from variable arguments. * */
+        if (flags == TK_LIST_EF_NULL) {
 
-        if ((flags == TK_LIST_EF_NULL) || (flags & TK_LIST_EF_DEFAULT))
+            /* It is an entry in the list for 'select' keyword or a standard
+             * (i.e. it is not default) option for 'choice' keyword. **/
+        
             et->token = va_arg(va, token_t);
+
+        }
+        
+        if (flags & TK_LIST_EF_DEFAULT) {
+
+            /* It is the default option for 'choice' keyword. **/
+
+            et->token = va_arg(va, token_t);
+        }
+        
+        if (flags & TK_LIST_EF_CONDITIONAL) {
+
+            et->condition = va_arg(va, expr_t);
+        }
 
         /* 'token1' is the tail of token list from last call. */
 
         token1 = token_list_add(&et->node, token1);
     } else {
 
-        error_print("''alloc'' fulled.\n");
+        error_print("''alloc'' failed.\n");
         token1 = NULL;
     }
 
@@ -317,6 +332,11 @@ bool eval_expr(expr_t expr)
                 debug_print("Broken dependency: %s.\n", token.TK_STRING);
                 break;
             }
+        } else {
+            /* We do not expect to get here!
+             * 'OP_NULL' always expects 'TT_SYMBOL'. **/
+
+            break;
         }
 
         return token.TK_BOOL;
@@ -396,12 +416,18 @@ int fprintf_menu(FILE * fp, menu_t * menu)
                         fprintf(fp, "#define %s y\n", item->common.symbol);
 
                 } else if (et->token.ttype == TT_INTEGER) {
-                    fprintf(fp, "#define %s %d\n", item->common.symbol,
-                        et->token.TK_INTEGER);
+                    
+                    /* There may be multiple options with 'TK_LIST_EF_SELECTED'. **/
+                    
+                    if (eval_expr(et->condition)) {
+                        fprintf(fp, "#define %s %d\n", item->common.symbol,
+                            et->token.TK_INTEGER);
+                    }
 
                 } else if (et->token.ttype == TT_DESCRIPTION) {
-                    fprintf(fp, "#define %s \"%s\"\n", item->common.symbol,
-                        et->token.TK_STRING);
+                    if (eval_expr(et->condition))
+                        fprintf(fp, "#define %s \"%s\"\n", item->common.symbol,
+                            et->token.TK_STRING);
                 }
             }
         }
@@ -434,20 +460,22 @@ int __populate_config_file(const char *filename, unsigned long flags)
 
     /* Dump every items to 'fp' based on 'flags'. */
     LIST_FOREACH(item, &symtable, sym_node) {
-        fprintf(fp, "%s ", item->common.symbol);
 
         item_token_list_for_each_entry(et, item) {
             if (et->flags & flags) {
                 switch (et->token.ttype) {
                 case TT_BOOL:
+                    fprintf(fp, "%s ", item->common.symbol);
                     fprintf(fp, "%s\n", et->token.TK_BOOL ? "true" : "false");
                     break;
 
                 case TT_INTEGER:
+                    fprintf(fp, "%s ", item->common.symbol);
                     fprintf(fp, "%d\n", et->token.TK_INTEGER);
                     break;
 
                 case TT_DESCRIPTION:
+                    fprintf(fp, "%s ", item->common.symbol);
                     fprintf(fp, "%s\n", et->token.TK_STRING);
                     break;
 
@@ -457,7 +485,10 @@ int __populate_config_file(const char *filename, unsigned long flags)
 
                 }
 
-                break;
+                /* There may be multiple entries in the token list with the requested
+                 * flags. We continue processing all tokes. For instance, multiple
+                 * option in a 'choice' may have 'TK_LIST_EF_DEFAULT' set while
+                 * being conditional, i.e. 'TK_LIST_EF_CONDITIONAL' set. */
             }
         }
     }

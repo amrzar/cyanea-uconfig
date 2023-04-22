@@ -44,6 +44,11 @@ struct extended_token {
     unsigned long flags;
     token_t token;
 
+    /* Per-token condition.
+     * It is only used for 'option' keyword. **/
+
+    expr_t condition;
+
     struct token_list node;
 };
 

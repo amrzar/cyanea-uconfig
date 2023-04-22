@@ -10,28 +10,31 @@ extern int push_menu(token_t, expr_t);
 extern int pop_menu(void);
 
 extern expr_t add_expr_op(enum expr_op, ...);
-
 #define yy_add_expr_op(op, ...) ({                      \
-    expr_t _tmp = add_expr_op((op), __VA_ARGS__);       \
-    if ((_tmp) == NULL)                                 \
+    expr_t __tmp = add_expr_op((op), __VA_ARGS__);      \
+    if (__tmp == NULL)                                  \
         YYERROR;                                        \
-    (_tmp);                                             \
+    (__tmp);                                            \
 })
 
 extern struct token_list *next_token(struct token_list *, unsigned long, ...);
-
-#define yy_next_token(token1, flags, ...) ({            \
-    struct token_list *_tmp = next_token((token1),      \
+#define __yy_next_token(token1, flags, ...) ({          \
+    struct token_list *__tmp = next_token((token1),     \
         (flags), __VA_ARGS__);                          \
-    if ((_tmp) == NULL)                                 \
+    if (__tmp == NULL)                                  \
         YYERROR;                                        \
-    (_tmp);                                             \
+    (__tmp);                                            \
 })
 
-extern int add_new_config_entry(token_t, token_t,
-    token_t, struct token_list *, expr_t, token_t);
-extern int add_new_choice_entry(token_t, token_t,
-    struct token_list *, expr_t, token_t);
+#define yy_next_token(t, flags, sym, cond) ({           \
+    unsigned long __flags = (flags);                    \
+    if ((cond) != NULL)                                 \
+        __flags |= TK_LIST_EF_CONDITIONAL;              \
+    __yy_next_token((t), __flags, (sym), (cond));       \
+})
+
+extern int add_new_config_entry(token_t, token_t, token_t, struct token_list *, expr_t, token_t);
+extern int add_new_choice_entry(token_t, token_t, struct token_list *, expr_t, token_t);
 extern int add_new_config_file(token_t);
 
 #define NULLDESC (token_t) {                            \
@@ -63,6 +66,7 @@ extern int add_new_config_file(token_t);
 %token SELECT
 %token INCLUDE
 %token DEFAULT
+%token IF
 
 %token <token> TT_BOOL
 %token <token> TT_INTEGER
@@ -71,10 +75,11 @@ extern int add_new_config_file(token_t);
 %token <token> TT_INVALID
 
 %type <token> help operand
-%type <exprtree> expression dependency
+%type <exprtree> expression
+%type <exprtree> dependency condition
 
-%type <flags> choice_default
-%type <tokenlist> choice_int_def choice_str_def
+%type <flags> is_default
+%type <tokenlist> choice_tt_int choice_tt_str
 %type <tokenlist> choice_options
 
 %type <tokenlist> config_selects
@@ -142,7 +147,7 @@ config_description:         { $$ = NULLDESC;    } /* empty . */
 
 config_selects:             { $$ = NULL;        } /* empty . */
     | SELECT TT_SYMBOL config_selects
-        { $$ = yy_next_token($3, TK_LIST_EF_NULL, $2);        }
+        { $$ = __yy_next_token($3, TK_LIST_EF_NULL, $2);      }
     ;
 
 config_type: BOOL   { $$ = (token_t)  {
@@ -165,26 +170,34 @@ stmt_config: CONFIG config_description TT_SYMBOL
 
 /* === THE 'CHOICE' SPECIFIC KEYWORD RULES === */
 
-choice_default:     { $$ = TK_LIST_EF_NULL;     } /* empty . */
+is_default:         { $$ = TK_LIST_EF_NULL;     } /* empty . */
     | DEFAULT       { $$ = TK_LIST_EF_DEFAULT;  }
     ;
 
-choice_int_def:            { $$ = NULL;         } /* empty . */
-    | OPTION TT_INTEGER choice_default choice_int_def
-        { $$ = yy_next_token($4, $3, $2);       }
+condition:                  { $$ = NULL;        } /* empty . */
+    | IF expression         { $$ = $2;          }
     ;
 
-choice_str_def:            { $$ = NULL;         } /* empty . */
-    | OPTION TT_DESCRIPTION choice_default choice_str_def
-        { $$ = yy_next_token($4, $3, $2);       }
+/* Options should have same type 'choice_tt_int' or 'choice_tt_str' and at
+ * least one entry should present. */
+
+choice_tt_int:              { $$ = NULL;        } /* empty . */
+    | OPTION TT_INTEGER condition is_default choice_tt_int
+        { $$ = yy_next_token($5, $4, $2, $3);   }
     ;
 
-choice_options: /* ... options should have same type. */
-      OPTION TT_INTEGER choice_default choice_int_def
-        { $$ = yy_next_token($4, $3, $2);                     }
-    | OPTION TT_DESCRIPTION choice_default choice_str_def
-        { $$ = yy_next_token($4, $3, $2);                     }
-;
+choice_tt_str:              { $$ = NULL;        } /* empty . */
+    | OPTION TT_DESCRIPTION condition is_default choice_tt_str
+        { $$ = yy_next_token($5, $4, $2, $3);   }
+    ;
+
+choice_options:
+      OPTION TT_INTEGER condition is_default choice_tt_int
+        { $$ = yy_next_token($5, $4, $2, $3);   }
+
+    | OPTION TT_DESCRIPTION condition is_default choice_tt_str
+        { $$ = yy_next_token($5, $4, $2, $3);   }
+    ;
 
 stmt_choice: CHOICE TT_DESCRIPTION TT_SYMBOL
         choice_options dependency help

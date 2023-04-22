@@ -29,6 +29,7 @@ integer         ([0-9]|[1-9][0-9]+|0x[a-fA-F0-9]+)
 "select"        { return SELECT; }
 ".include"      { return INCLUDE; }
 "[default]"     { return DEFAULT; }
+"if"            { return IF; }
 
 \(              { return OPENPAREN; }
 \)              { return CLOSEPAREN; }
