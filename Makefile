@@ -23,13 +23,13 @@ config.ncurses: y.tab.o lex.yy.o $(patsubst %.c,%.o,$(SOURCES))
 	@echo "CC      $<"
 	$(Q)$(HOSTCC) $(HOSTCFLAGS) -MMD -MF $(patsubst %.o,%.d,$@) -c -o $@ $<
 
-menuconfig: config.ncurses
+menuconfig: config.ncurses FORCE
 	$(Q)./config.ncurses --config $(configs.in) --sys-config $(sysconfig) --gui
 
-silentoldconfig: config.ncurses
+silentoldconfig: config.ncurses FORCE
 	$(Q)./config.ncurses --config $(configs.in) --sys-config $(sysconfig)
 
-defconfig: config.ncurses
+defconfig: config.ncurses FORCE
 	$(Q)rm -f $(dir $(configs.in)).old.config
 	$(Q)./config.ncurses --dump --config $(configs.in)
 
@@ -40,4 +40,5 @@ clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
 		$(wildcard *.o) config.ncurses $(DEPS)
 
-.PHONY: menuconfig silentoldconfig defconfig style clean
+FORCE:
+.PHONY: style clean FORCE
