@@ -91,24 +91,26 @@ struct token_list *next_token(struct token_list *token1,
 
     if ((et = alloc(struct extended_token)) != NULL) {
         et->flags = flags;
-        et->condition =  NULL;
+        et->condition = NULL;
 
         if (flags == TK_LIST_EF_NULL) {
 
             /* It is an entry in the list for 'select' keyword or a standard
-             * (i.e. it is not default) option for 'choice' keyword. **/
-        
+             * (i.e. it is not default) option for 'choice' keyword. */
+
             et->token = va_arg(va, token_t);
 
         }
-        
+
         if (flags & TK_LIST_EF_DEFAULT) {
 
-            /* It is the default option for 'choice' keyword. **/
+            /* TODO. Check if there is any conditional token in the list. */
+
+            /* It is the default option for 'choice' keyword. */
 
             et->token = va_arg(va, token_t);
         }
-        
+
         if (flags & TK_LIST_EF_CONDITIONAL) {
 
             et->condition = va_arg(va, expr_t);
@@ -117,9 +119,10 @@ struct token_list *next_token(struct token_list *token1,
         /* 'token1' is the tail of token list from last call. */
 
         token1 = token_list_add(&et->node, token1);
-    } else {
 
+    } else {
         error_print("''alloc'' failed.\n");
+
         token1 = NULL;
     }
 
@@ -181,7 +184,7 @@ int add_new_choice_entry(token_t token1, token_t token2,
     item_t *item = alloc(item_t);
 
     if (item == NULL) {
-        error_print("''alloc'' fulled.\n");
+        error_print("''alloc'' failed.\n");
         return -1;
     }
 
@@ -332,12 +335,8 @@ bool eval_expr(expr_t expr)
                 debug_print("Broken dependency: %s.\n", token.TK_STRING);
                 break;
             }
-        } else {
-            /* We do not expect to get here!
-             * 'OP_NULL' always expects 'TT_SYMBOL'. **/
-
+        } else
             break;
-        }
 
         return token.TK_BOOL;
 
@@ -416,9 +415,9 @@ int fprintf_menu(FILE * fp, menu_t * menu)
                         fprintf(fp, "#define %s y\n", item->common.symbol);
 
                 } else if (et->token.ttype == TT_INTEGER) {
-                    
-                    /* There may be multiple options with 'TK_LIST_EF_SELECTED'. **/
-                    
+
+                    /* There may be multiple options with 'TK_LIST_EF_SELECTED'. */
+
                     if (eval_expr(et->condition)) {
                         fprintf(fp, "#define %s %d\n", item->common.symbol,
                             et->token.TK_INTEGER);

@@ -12,14 +12,14 @@ typedef struct menu {
     string_t prompt;
     expr_t dependency;
 
-    /* ... list of items in the menu. */
+    /* List of items in the menu. */
     LIST_HEAD entries;
     LIST_HEAD childs, sibling;
 } menu_t;
 
 struct include {
     string_t file;
-    menu_t *menu;               /* ... menu, the config file included in. */
+    menu_t *menu;               /* The menu, the config file included in. */
 
     LIST_HEAD node;
 };
@@ -28,10 +28,10 @@ extern menu_t main_menu, *curr_menu;
 extern LIST_HEAD files;
 
 struct item_shared {
-    string_t prompt;            /* ... entry's prompt string. */
-    string_t symbol;            /* ... entry's configuration symbol. */
-    expr_t dependency;          /* ... dependency tree for this symbol. */
-    string_t help;              /* ... help statements. */
+    string_t prompt;            /* entry's prompt string. */
+    string_t symbol;            /* entry's configuration symbol. */
+    expr_t dependency;          /* dependency tree for this symbol. */
+    string_t help;              /* help statements. */
 };
 
 #define TK_LIST_EF_NULL 0
@@ -44,8 +44,7 @@ struct extended_token {
     unsigned long flags;
     token_t token;
 
-    /* Per-token condition.
-     * It is only used for 'option' keyword. **/
+    /* Per-token condition; Used for 'option' keyword. */
 
     expr_t condition;
 
@@ -66,9 +65,7 @@ typedef struct item {
      * entries are tokens from 'select' keyword with 'TK_LIST_EF_NULL' flag.
      *
      * Multiple Choices - List of tokens for 'option' keywords. The default entry
-     * has 'TK_LIST_EF_DEFAULT' flag.
-     *
-     **/
+     * has 'TK_LIST_EF_DEFAULT' flag. */
 
     struct token_list *tk_list;
 
