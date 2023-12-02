@@ -34,7 +34,7 @@ defconfig: config.ncurses FORCE
 	$(Q)./config.ncurses --dump --config $(configs.in)
 
 style:
-	$(Q)find . \( -name '*.c' -o -name '*.h' \) -exec ./style.sh {} ';' 
+	$(Q)find . \( -name '*.c' -o -name '*.h' \) -exec ../scripts/style.sh {} ';' 
 
 clean:
 	$(Q)rm -f lex.yy.c y.tab.c y.output y.tab.h \
