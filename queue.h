@@ -16,13 +16,13 @@ typedef struct list_head {
 } LIST_HEAD;
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
-static inline void INIT_LIST_HEAD(LIST_HEAD * entry)
+static inline void INIT_LIST_HEAD(LIST_HEAD *entry)
 {
     entry->next = entry->prev = entry;
 }
 
-static inline void __list_insert(LIST_HEAD * entry, LIST_HEAD * prev,
-    LIST_HEAD * next)
+static inline void __list_insert(LIST_HEAD *entry, LIST_HEAD *prev,
+    LIST_HEAD *next)
 {
     next->prev = entry;
     entry->next = next;
@@ -30,7 +30,7 @@ static inline void __list_insert(LIST_HEAD * entry, LIST_HEAD * prev,
     prev->next = entry;
 }
 
-static inline void LIST_INSERT_TAIL(LIST_HEAD * entry, LIST_HEAD * head)
+static inline void LIST_INSERT_TAIL(LIST_HEAD *entry, LIST_HEAD *head)
 {
     __list_insert(entry, head->prev, head);
 }

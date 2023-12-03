@@ -35,7 +35,7 @@ static item_t *hash_get_item(string_t symbol)
     return NULL;
 }
 
-static int hash_add_item(item_t * item, string_t symbol)
+static int hash_add_item(item_t *item, string_t symbol)
 {
     ENTRY entry = { symbol, item };
 
@@ -163,8 +163,8 @@ int add_new_config_entry(token_t token1, token_t token2,
 
     /* Store 'token3' at the head as 'TK_LIST_EF_CONFIG'. */
     if ((item->tk_list =
-            next_token(token4, (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT),
-                token3)) == NULL)
+                next_token(token4, (TK_LIST_EF_CONFIG | TK_LIST_EF_DEFAULT),
+                    token3)) == NULL)
         return -1;
 
     item->refcount = 0;
@@ -232,26 +232,26 @@ expr_t add_expr_op(enum expr_op op, ...)
     va_start(va, op);
 
     switch (op) {
-    case OP_EQUAL:
-    case OP_NEQUAL:
-        expr->LEFT.token = va_arg(va, token_t);
+        case OP_EQUAL:
+        case OP_NEQUAL:
+            expr->LEFT.token = va_arg(va, token_t);
 
-    case OP_NULL:              /* 'RIGHT' is same as 'NODE' */
-        expr->RIGHT.token = va_arg(va, token_t);
-        break;
+        case OP_NULL:              /* 'RIGHT' is same as 'NODE' */
+            expr->RIGHT.token = va_arg(va, token_t);
+            break;
 
-    case OP_AND:
-    case OP_OR:
-        expr->LEFT.expr = va_arg(va, expr_t);
+        case OP_AND:
+        case OP_OR:
+            expr->LEFT.expr = va_arg(va, expr_t);
 
-    case OP_NOT:               /* 'RIGHT' is same as 'NODE' */
-        expr->RIGHT.expr = va_arg(va, expr_t);
-        break;
+        case OP_NOT:               /* 'RIGHT' is same as 'NODE' */
+            expr->RIGHT.expr = va_arg(va, expr_t);
+            break;
 
-    default:
-        free(expr);
+        default:
+            free(expr);
 
-        expr = NULL;
+            expr = NULL;
     }
 
     if (expr != NULL)
@@ -275,42 +275,43 @@ static token_t hash_get_token(string_t symbol)
     }
 
     return ((token_t) {
-        .ttype = TT_INVALID}
-    );
+        .ttype = TT_INVALID
+    }
+        );
 }
 
 static bool __eval_expr(token_t token1, token_t token2, enum expr_op op)
 {
     switch (token1.ttype) {
-    case TT_BOOL:
-        if (op == OP_EQUAL)
-            return (token1.TK_BOOL == token2.TK_BOOL);
+        case TT_BOOL:
+            if (op == OP_EQUAL)
+                return (token1.TK_BOOL == token2.TK_BOOL);
 
-        if (op == OP_NEQUAL)
-            return (token1.TK_BOOL != token2.TK_BOOL);
+            if (op == OP_NEQUAL)
+                return (token1.TK_BOOL != token2.TK_BOOL);
 
-        break;
+            break;
 
-    case TT_INTEGER:
-        if (op == OP_EQUAL)
-            return (token1.TK_INTEGER == token2.TK_INTEGER);
+        case TT_INTEGER:
+            if (op == OP_EQUAL)
+                return (token1.TK_INTEGER == token2.TK_INTEGER);
 
-        if (op == OP_NEQUAL)
-            return (token1.TK_INTEGER != token2.TK_INTEGER);
+            if (op == OP_NEQUAL)
+                return (token1.TK_INTEGER != token2.TK_INTEGER);
 
-        break;
+            break;
 
-    case TT_DESCRIPTION:
-        if (op == OP_EQUAL)
-            return (strcmp(token1.TK_STRING, token2.TK_STRING) == 0);
+        case TT_DESCRIPTION:
+            if (op == OP_EQUAL)
+                return (strcmp(token1.TK_STRING, token2.TK_STRING) == 0);
 
-        if (op == OP_NEQUAL)
-            return (strcmp(token1.TK_STRING, token2.TK_STRING) != 0);
+            if (op == OP_NEQUAL)
+                return (strcmp(token1.TK_STRING, token2.TK_STRING) != 0);
 
-        break;
+            break;
 
-    default:
-        debug_print("Unable to compute 'expr'.\n");
+        default:
+            debug_print("Unable to compute 'expr'.\n");
     }
 
     return false;
@@ -325,69 +326,69 @@ bool eval_expr(expr_t expr)
         return true;
 
     switch (expr->op) {
-    case OP_NULL:
-        token = expr->NODE.token;
+        case OP_NULL:
+            token = expr->NODE.token;
 
-        if (token.ttype == TT_SYMBOL) {
-            token = hash_get_token(token.TK_STRING);
+            if (token.ttype == TT_SYMBOL) {
+                token = hash_get_token(token.TK_STRING);
 
-            if ((token.ttype == TT_INVALID) || (token.ttype != TT_BOOL)) {
-                debug_print("Broken dependency: %s.\n", token.TK_STRING);
+                if ((token.ttype == TT_INVALID) || (token.ttype != TT_BOOL)) {
+                    debug_print("Broken dependency: %s.\n", token.TK_STRING);
+                    break;
+                }
+            } else
+                break;
+
+            return token.TK_BOOL;
+
+        case OP_EQUAL:
+        case OP_NEQUAL:
+            /* Use 'LEFT' and 'RIGHT' tokens. */
+            token1 = expr->LEFT.token;
+            token2 = expr->RIGHT.token;
+
+            if (token1.ttype == TT_SYMBOL) {
+                token1 = hash_get_token(token1.TK_STRING);
+
+                if (token1.ttype == TT_INVALID) {
+                    debug_print("Broken dependency: %s.\n", token1.TK_STRING);
+                    break;
+                }
+            }
+
+            if (token2.ttype == TT_SYMBOL) {
+                token2 = hash_get_token(token2.TK_STRING);
+
+                if (token2.ttype == TT_INVALID) {
+                    debug_print("Broken dependency: %s.\n", token2.TK_STRING);
+                    break;
+                }
+            }
+
+            if (token1.ttype != token2.ttype) {
+                debug_print("Tokens are incompatible.\n");
                 break;
             }
-        } else
-            break;
 
-        return token.TK_BOOL;
+            return __eval_expr(token1, token2, expr->op);
 
-    case OP_EQUAL:
-    case OP_NEQUAL:
-        /* Use 'LEFT' and 'RIGHT' tokens. */
-        token1 = expr->LEFT.token;
-        token2 = expr->RIGHT.token;
+        case OP_NOT:
+            return !eval_expr(expr->NODE.expr);
 
-        if (token1.ttype == TT_SYMBOL) {
-            token1 = hash_get_token(token1.TK_STRING);
+        case OP_OR:
+            return eval_expr(expr->LEFT.expr) || eval_expr(expr->RIGHT.expr);
 
-            if (token1.ttype == TT_INVALID) {
-                debug_print("Broken dependency: %s.\n", token1.TK_STRING);
-                break;
-            }
-        }
+        case OP_AND:
+            return eval_expr(expr->LEFT.expr) && eval_expr(expr->RIGHT.expr);
 
-        if (token2.ttype == TT_SYMBOL) {
-            token2 = hash_get_token(token2.TK_STRING);
-
-            if (token2.ttype == TT_INVALID) {
-                debug_print("Broken dependency: %s.\n", token2.TK_STRING);
-                break;
-            }
-        }
-
-        if (token1.ttype != token2.ttype) {
-            debug_print("Tokens are incompatible.\n");
-            break;
-        }
-
-        return __eval_expr(token1, token2, expr->op);
-
-    case OP_NOT:
-        return !eval_expr(expr->NODE.expr);
-
-    case OP_OR:
-        return eval_expr(expr->LEFT.expr) || eval_expr(expr->RIGHT.expr);
-
-    case OP_AND:
-        return eval_expr(expr->LEFT.expr) && eval_expr(expr->RIGHT.expr);
-
-    default:
-        return false;
+        default:
+            return false;
     }
 
     return false;
 }
 
-int fprintf_menu(FILE * fp, menu_t * menu)
+int fprintf_menu(FILE *fp, menu_t *menu)
 {
     menu_t *m;
     item_t *item;
@@ -445,9 +446,9 @@ int __populate_config_file(const char *filename, unsigned long flags)
     int fd;
 
     if ((fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC |
-                /* ... file does not exist if dumping defaults. */
-                ((flags & TK_LIST_EF_DEFAULT) ? O_EXCL : 0),
-                S_IRUSR | S_IWUSR)) == -1)
+                    /* ... file does not exist if dumping defaults. */
+                    ((flags & TK_LIST_EF_DEFAULT) ? O_EXCL : 0),
+                    S_IRUSR | S_IWUSR)) == -1)
         return -1;
 
     if ((fp = fdopen(fd, "w")) == NULL) {
@@ -463,24 +464,24 @@ int __populate_config_file(const char *filename, unsigned long flags)
         item_token_list_for_each_entry(et, item) {
             if (et->flags & flags) {
                 switch (et->token.ttype) {
-                case TT_BOOL:
-                    fprintf(fp, "%s ", item->common.symbol);
-                    fprintf(fp, "%s\n", et->token.TK_BOOL ? "true" : "false");
-                    break;
+                    case TT_BOOL:
+                        fprintf(fp, "%s ", item->common.symbol);
+                        fprintf(fp, "%s\n", et->token.TK_BOOL ? "true" : "false");
+                        break;
 
-                case TT_INTEGER:
-                    fprintf(fp, "%s ", item->common.symbol);
-                    fprintf(fp, "%d\n", et->token.TK_INTEGER);
-                    break;
+                    case TT_INTEGER:
+                        fprintf(fp, "%s ", item->common.symbol);
+                        fprintf(fp, "%d\n", et->token.TK_INTEGER);
+                        break;
 
-                case TT_DESCRIPTION:
-                    fprintf(fp, "%s ", item->common.symbol);
-                    fprintf(fp, "%s\n", et->token.TK_STRING);
-                    break;
+                    case TT_DESCRIPTION:
+                        fprintf(fp, "%s ", item->common.symbol);
+                        fprintf(fp, "%s\n", et->token.TK_STRING);
+                        break;
 
-                default:
-                    /* ... only when 'flag' is -1. */
-                    fprintf(fp, "undefined.\n");
+                    default:
+                        /* ... only when 'flag' is -1. */
+                        fprintf(fp, "undefined.\n");
 
                 }
 
@@ -555,7 +556,7 @@ void __toggle_choice(struct extended_token *et, string_t n)
     }
 }
 
-void toggle_config(item_t * item, ...)
+void toggle_config(item_t *item, ...)
 {
     va_list va;
     struct extended_token *et;

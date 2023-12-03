@@ -83,7 +83,7 @@ typedef struct item {
     LIST_HEAD sym_node;
 } item_t;
 
-static inline struct extended_token *item_get_config_et(item_t * item)
+static inline struct extended_token *item_get_config_et(item_t *item)
 {
     struct extended_token *et = item_token_list_entry(item->tk_list);
     return et->flags & TK_LIST_EF_CONFIG ? et : NULL;
@@ -114,7 +114,7 @@ static inline int build_autoconfig(const char *filename)
 }
 
 extern void __toggle_choice(struct extended_token *, string_t);
-static inline void toggle_choice(item_t * item, string_t n)
+static inline void toggle_choice(item_t *item, string_t n)
 {
     struct extended_token *et;
 

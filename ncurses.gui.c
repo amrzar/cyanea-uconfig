@@ -203,26 +203,26 @@ string_t GUI_OPEN(input_box, const char *help, const char *message,
         }
 
         switch (getch_key) {
-        case KEY_LEFT:
-            form_driver(form, REQ_PREV_CHAR);
-            break;
+            case KEY_LEFT:
+                form_driver(form, REQ_PREV_CHAR);
+                break;
 
-        case KEY_RIGHT:
-            form_driver(form, REQ_NEXT_CHAR);
-            break;
+            case KEY_RIGHT:
+                form_driver(form, REQ_NEXT_CHAR);
+                break;
 
-        case KEY_BACKSPACE:
-        case 127:
-            form_driver(form, REQ_DEL_PREV);
-            break;
+            case KEY_BACKSPACE:
+            case 127:
+                form_driver(form, REQ_DEL_PREV);
+                break;
 
-        case KEY_DC:
-            form_driver(form, REQ_DEL_CHAR);
-            break;
+            case KEY_DC:
+                form_driver(form, REQ_DEL_CHAR);
+                break;
 
-        default:
-            form_driver(form, getch_key);
-            break;
+            default:
+                form_driver(form, getch_key);
+                break;
         }
     }
 
@@ -230,11 +230,11 @@ string_t GUI_OPEN(input_box, const char *help, const char *message,
     unpost_form(form);
     free_form(form);
 
- out_free_fields:
+out_free_fields:
     free_field(fields[0]);
     free_field(fields[1]);
 
- out:
+out:
     delwin(subwin);
     close_popup();
 
@@ -289,32 +289,32 @@ int GUI_OPEN(radio_box, const char *message, string_t choices[],
         }
 
         switch (getch_key) {
-        case KEY_DOWN:
-            menu_driver(menu, REQ_DOWN_ITEM);
-            break;
+            case KEY_DOWN:
+                menu_driver(menu, REQ_DOWN_ITEM);
+                break;
 
-        case KEY_UP:
-            menu_driver(menu, REQ_UP_ITEM);
-            break;
+            case KEY_UP:
+                menu_driver(menu, REQ_UP_ITEM);
+                break;
 
-        case KEY_NPAGE:
-            menu_driver(menu, REQ_SCR_DPAGE);
-            break;
+            case KEY_NPAGE:
+                menu_driver(menu, REQ_SCR_DPAGE);
+                break;
 
-        case KEY_PPAGE:
-            menu_driver(menu, REQ_SCR_UPAGE);
-            break;
+            case KEY_PPAGE:
+                menu_driver(menu, REQ_SCR_UPAGE);
+                break;
         }
     }
 
     unpost_menu(menu);
     free_menu(menu);
 
- out_free_items:
+out_free_items:
     while (n > 0)
         free_item(items[--n]);
 
- out:
+out:
     delwin(subwin);
     close_popup();
 

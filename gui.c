@@ -50,12 +50,12 @@ static int init_screen(void)
         delwin(footnote);
 
         if (((middle = screen_subwin(__MAIN_MENU_HIGH,
-                        SCREEN_WIDTH,
-                        TITLE_HIGH,
-                        MARGIN_LEFT)) == NULL) ||
+                            SCREEN_WIDTH,
+                            TITLE_HIGH,
+                            MARGIN_LEFT)) == NULL) ||
             ((footnote = screen_subwin(FOOTNOTE_HIGH,
-                        SCREEN_WIDTH,
-                        LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT)) == NULL)) {
+                            SCREEN_WIDTH,
+                            LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT)) == NULL)) {
             delwin(middle);     /* ... ignore NULL. */
             delwin(footnote);
             return -1;
@@ -104,34 +104,34 @@ static void draw_main_menu(const char *menu_title,
             wattron(middle, A_STANDOUT);
 
         switch (choices[current_row].t) {
-        case CONF_MENU:
-            mvwprintw(middle, menu_high + 2, 0, _CONF_MENU,
-                PROMPT_MENU(choices[current_row]));
-            break;
+            case CONF_MENU:
+                mvwprintw(middle, menu_high + 2, 0, _CONF_MENU,
+                    PROMPT_MENU(choices[current_row]));
+                break;
 
-        case CONF_YES:
-            mvwprintw(middle, menu_high + 2, 0, _CONF_YES,
-                PROMPT_ITEM(choices[current_row]));
-            break;
+            case CONF_YES:
+                mvwprintw(middle, menu_high + 2, 0, _CONF_YES,
+                    PROMPT_ITEM(choices[current_row]));
+                break;
 
-        case CONF_NO:
-            mvwprintw(middle, menu_high + 2, 0, _CONF_NO,
-                PROMPT_ITEM(choices[current_row]));
-            break;
+            case CONF_NO:
+                mvwprintw(middle, menu_high + 2, 0, _CONF_NO,
+                    PROMPT_ITEM(choices[current_row]));
+                break;
 
-        case CONF_INPUT:
-            mvwprintw(middle, menu_high + 2, 0, _CONF_INPUT,
-                PROMPT_ITEM(choices[current_row]));
-            break;
+            case CONF_INPUT:
+                mvwprintw(middle, menu_high + 2, 0, _CONF_INPUT,
+                    PROMPT_ITEM(choices[current_row]));
+                break;
 
-        case CONF_RADIO:
-            mvwprintw(middle, menu_high + 2, 0, _CONF_RADIO,
-                PROMPT_ITEM(choices[current_row]));
-            break;
+            case CONF_RADIO:
+                mvwprintw(middle, menu_high + 2, 0, _CONF_RADIO,
+                    PROMPT_ITEM(choices[current_row]));
+                break;
 
-        default:
-            mvwprintw(middle, menu_high + 2, 0,
-                "err. unrecognised configuration item.");
+            default:
+                mvwprintw(middle, menu_high + 2, 0,
+                    "err. unrecognised configuration item.");
         }
 
         if (current_row == current_highlight)
@@ -230,7 +230,7 @@ static int main_menu_driver(const char *menu_title, config_t choices[])
         (tmp); \
     })
 
-static config_t *get_config(menu_t * parent)
+static config_t *get_config(menu_t *parent)
 {
     static int conf_size = 0;
     static config_t *conf = NULL;
@@ -282,7 +282,7 @@ static config_t *get_config(menu_t * parent)
     return conf;
 }
 
-static int open_radio_item(item_t * item)
+static int open_radio_item(item_t *item)
 {
     string_t *choices = NULL;
     struct extended_token *et;
@@ -349,95 +349,95 @@ int start_gui(int nr_pages)
         }
 
         pressed_key = main_menu_driver((stack[index]->prompt == NULL) ?
-            /* Menu title: 'Options' as main title. */
-            "Options" : stack[index]->prompt, config);
+                /* Menu title: 'Options' as main title. */
+                "Options" : stack[index]->prompt, config);
 
         switch (pressed_key) {
-        case SPECIAL_KEY_BS:
-            if (index > 0)
-                index--;
+            case SPECIAL_KEY_BS:
+                if (index > 0)
+                    index--;
 
-            break;
+                break;
 
-        case SPECIAL_KEY_Q:
-            while (TRUE) {
+            case SPECIAL_KEY_Q:
+                while (TRUE) {
 
-                int d = open_message_box(2, 90, LINES / 2, COLS / 2 - 45,
-                    "%bAre you sure?%r", get_keys(EXIT));
+                    int d = open_message_box(2, 90, LINES / 2, COLS / 2 - 45,
+                            "%bAre you sure?%r", get_keys(EXIT));
 
-                if (d == 'x') {
-                    ret = -1;
-                    goto out;
+                    if (d == 'x') {
+                        ret = -1;
+                        goto out;
+                    }
+
+                    else if ((d == 'S') || (d == 's')) {
+                        goto out;   /* ... return SUCCESS. */
+
+                    } else if ((d == 'C') || (d == 'c') || (d == 27))
+                        break;
+
+                    else if (d == KEY_RESIZE)
+                        break;      /* ... terminal resized. */
                 }
 
-                else if ((d == 'S') || (d == 's')) {
-                    goto out;   /* ... return SUCCESS. */
+                break;
 
-                } else if ((d == 'C') || (d == 'c') || (d == 27))
-                    break;
+            case SPECIAL_KEY_H:
+                if (cur_config.t != CONF_MENU) {
+                    item_t *item = cur_config.item;
 
-                else if (d == KEY_RESIZE)
-                    break;      /* ... terminal resized. */
-            }
-
-            break;
-
-        case SPECIAL_KEY_H:
-            if (cur_config.t != CONF_MENU) {
-                item_t *item = cur_config.item;
-
-                open_pad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
-                    TITLE_HIGH, MARGIN_LEFT, (item->common.help == NULL) ?
-                    "No help provided." : item->common.help, 150);
-            }
-
-            break;
-
-        case SPECIAL_KEY_F1:
-            open_file(__MAIN_MENU_HIGH, SCREEN_WIDTH,
-                /* ... 'README.md' is inside the '_IN_FOLDER' folder. */
-                TITLE_HIGH, MARGIN_LEFT, "README.md");
-            break;
-
-        default:               /* Process 'SPECIAL_KEY_RT' ... */
-
-            if (cur_config.t == CONF_MENU)
-                stack[++index] = cur_config.menu;
-
-            else if (cur_config.t == CONF_YES)
-                toggle_config(cur_config.item);
-
-            else if (cur_config.t == CONF_NO)
-                toggle_config(cur_config.item);
-
-            else if (cur_config.t == CONF_INPUT) {
-                string_t input;
-                struct extended_token *et = item_get_config_et(cur_config.item);
-
-                if (et->token.ttype == TT_INTEGER) {
-                    input =
-                        int_input_box("", cur_config.item->common.prompt,
-                        et->token.info.number);
-
-                    if (input != NULL)
-                        toggle_config(cur_config.item, strtol(input, NULL, 0));
-
-                } else {        /* and TT_DESCRIPTION. */
-                    input = input_box("",
-                        cur_config.item->common.prompt, et->token.TK_STRING,
-                        "");
-
-                    if (input != NULL)
-                        toggle_config(cur_config.item, input);
+                    open_pad(__MAIN_MENU_HIGH, SCREEN_WIDTH,
+                        TITLE_HIGH, MARGIN_LEFT, (item->common.help == NULL) ?
+                        "No help provided." : item->common.help, 150);
                 }
 
-                free(input);
-            } else              /* and 'CONF_RADIO'. */
-                open_radio_item(cur_config.item);
+                break;
+
+            case SPECIAL_KEY_F1:
+                open_file(__MAIN_MENU_HIGH, SCREEN_WIDTH,
+                    /* ... 'README.md' is inside the '_IN_FOLDER' folder. */
+                    TITLE_HIGH, MARGIN_LEFT, "README.md");
+                break;
+
+            default:               /* Process 'SPECIAL_KEY_RT' ... */
+
+                if (cur_config.t == CONF_MENU)
+                    stack[++index] = cur_config.menu;
+
+                else if (cur_config.t == CONF_YES)
+                    toggle_config(cur_config.item);
+
+                else if (cur_config.t == CONF_NO)
+                    toggle_config(cur_config.item);
+
+                else if (cur_config.t == CONF_INPUT) {
+                    string_t input;
+                    struct extended_token *et = item_get_config_et(cur_config.item);
+
+                    if (et->token.ttype == TT_INTEGER) {
+                        input =
+                            int_input_box("", cur_config.item->common.prompt,
+                                et->token.info.number);
+
+                        if (input != NULL)
+                            toggle_config(cur_config.item, strtol(input, NULL, 0));
+
+                    } else {        /* and TT_DESCRIPTION. */
+                        input = input_box("",
+                                cur_config.item->common.prompt, et->token.TK_STRING,
+                                "");
+
+                        if (input != NULL)
+                            toggle_config(cur_config.item, input);
+                    }
+
+                    free(input);
+                } else              /* and 'CONF_RADIO'. */
+                    open_radio_item(cur_config.item);
         }
     }
 
- out:
+out:
     free(config);
     free(stack);
 

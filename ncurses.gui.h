@@ -37,10 +37,10 @@ gkey_t get_keys(enum kt);
  * %H A_STANDOUT        : Activate best highlighting mode of the terminal
  * %h Reset A_STANDOUT  : Deactivate highlighting mode
  * %r Reset attribute   : Normal display
- * 
+ *
  **/
 
-static int wattrpr(WINDOW * win, int y, int x, const char *s)
+static int wattrpr(WINDOW *win, int y, int x, const char *s)
 {
     int i, attr = 0, slen = 0;
     wmove(win, y, x);
@@ -87,13 +87,13 @@ static string_t int_input_box(const char *help, const char *prompt, integer_t i)
     char tmp[64];
 
     switch (i.base) {
-    case 16:
-        snprintf(tmp, 64, "0x%X", i.n);
-        input = input_box(help, prompt, tmp, "^0x[a-fA-F0-9]* *$");
-        break;
-    default:
-        snprintf(tmp, 64, "%d", i.n);
-        input = input_box(help, prompt, tmp, "^[0-9]* *$");
+        case 16:
+            snprintf(tmp, 64, "0x%X", i.n);
+            input = input_box(help, prompt, tmp, "^0x[a-fA-F0-9]* *$");
+            break;
+        default:
+            snprintf(tmp, 64, "%d", i.n);
+            input = input_box(help, prompt, tmp, "^[0-9]* *$");
     }
 
     return input;

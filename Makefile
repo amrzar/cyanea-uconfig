@@ -1,5 +1,6 @@
 #  SPDX-License-Identifier: GPL-2.0-or-later
 
+export USE_ASTYLE = 1
 configs.in ?= $(srctree)/configs.in
 
 DEPS = $(wildcard *.d)
