@@ -87,13 +87,13 @@ static string_t int_input_box(const char *help, const char *prompt, integer_t i)
     char tmp[64];
 
     switch (i.base) {
-        case 16:
-            snprintf(tmp, 64, "0x%X", i.n);
-            input = input_box(help, prompt, tmp, "^0x[a-fA-F0-9]* *$");
-            break;
-        default:
-            snprintf(tmp, 64, "%d", i.n);
-            input = input_box(help, prompt, tmp, "^[0-9]* *$");
+    case 16:
+        snprintf(tmp, 64, "0x%X", i.n);
+        input = input_box(help, prompt, tmp, "^0x[a-fA-F0-9]* *$");
+        break;
+    default:
+        snprintf(tmp, 64, "%d", i.n);
+        input = input_box(help, prompt, tmp, "^[0-9]* *$");
     }
 
     return input;

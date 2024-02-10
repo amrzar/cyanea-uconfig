@@ -203,26 +203,26 @@ string_t GUI_OPEN(input_box, const char *help, const char *message,
         }
 
         switch (getch_key) {
-            case KEY_LEFT:
-                form_driver(form, REQ_PREV_CHAR);
-                break;
+        case KEY_LEFT:
+            form_driver(form, REQ_PREV_CHAR);
+            break;
 
-            case KEY_RIGHT:
-                form_driver(form, REQ_NEXT_CHAR);
-                break;
+        case KEY_RIGHT:
+            form_driver(form, REQ_NEXT_CHAR);
+            break;
 
-            case KEY_BACKSPACE:
-            case 127:
-                form_driver(form, REQ_DEL_PREV);
-                break;
+        case KEY_BACKSPACE:
+        case 127:
+            form_driver(form, REQ_DEL_PREV);
+            break;
 
-            case KEY_DC:
-                form_driver(form, REQ_DEL_CHAR);
-                break;
+        case KEY_DC:
+            form_driver(form, REQ_DEL_CHAR);
+            break;
 
-            default:
-                form_driver(form, getch_key);
-                break;
+        default:
+            form_driver(form, getch_key);
+            break;
         }
     }
 
@@ -289,21 +289,21 @@ int GUI_OPEN(radio_box, const char *message, string_t choices[],
         }
 
         switch (getch_key) {
-            case KEY_DOWN:
-                menu_driver(menu, REQ_DOWN_ITEM);
-                break;
+        case KEY_DOWN:
+            menu_driver(menu, REQ_DOWN_ITEM);
+            break;
 
-            case KEY_UP:
-                menu_driver(menu, REQ_UP_ITEM);
-                break;
+        case KEY_UP:
+            menu_driver(menu, REQ_UP_ITEM);
+            break;
 
-            case KEY_NPAGE:
-                menu_driver(menu, REQ_SCR_DPAGE);
-                break;
+        case KEY_NPAGE:
+            menu_driver(menu, REQ_SCR_DPAGE);
+            break;
 
-            case KEY_PPAGE:
-                menu_driver(menu, REQ_SCR_UPAGE);
-                break;
+        case KEY_PPAGE:
+            menu_driver(menu, REQ_SCR_UPAGE);
+            break;
         }
     }
 

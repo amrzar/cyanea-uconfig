@@ -69,8 +69,8 @@ typedef struct item {
 
     struct token_list *tk_list;
 
-#define item_token_list_entry(ptr) \
-    ({ typeof(ptr) ____ptr  = (ptr); \
+#define item_token_list_entry(ptr) ({ \
+        typeof(ptr) ____ptr  = (ptr); \
         ____ptr ? container_of(____ptr , struct extended_token, node) : NULL; \
     })
 

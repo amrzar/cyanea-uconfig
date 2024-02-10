@@ -42,25 +42,25 @@ int main(int argc, char *argv[])
             break;
 
         switch (c) {
-            case 0:
-                break;
+        case 0:
+            break;
 
-            case 'i':
-                in_filename = optarg;
-                break;
+        case 'i':
+            in_filename = optarg;
+            break;
 
-            case 'o':
-                out_filename = optarg;
-                break;
+        case 'o':
+            out_filename = optarg;
+            break;
 
-            case 'h':
-                print_help(argv[0]);
-                return SUCCESS;
+        case 'h':
+            print_help(argv[0]);
+            return SUCCESS;
 
-            case '?':
-            default:
-                print_help(argv[0]);
-                return -1;
+        case '?':
+        default:
+            print_help(argv[0]);
+            return -1;
         }
     }
 
