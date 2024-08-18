@@ -419,6 +419,7 @@ int start_gui(int nr_pages)
                     if (input != NULL)
                         toggle_config(cur_config.item, strtol(input, NULL, 0));
 
+                    free(input);
                 } else {        /* and TT_DESCRIPTION. */
                     input = input_box("",
                             cur_config.item->common.prompt, et->token.TK_STRING,
@@ -426,9 +427,9 @@ int start_gui(int nr_pages)
 
                     if (input != NULL)
                         toggle_config(cur_config.item, input);
-                }
-
-                free(input);
+                
+                    /* 'toggle_config' uses the input. So it will free the buffer. */
+                }               
             } else              /* and 'CONF_RADIO'. */
                 open_radio_item(cur_config.item);
         }
