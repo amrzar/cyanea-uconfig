@@ -53,7 +53,7 @@ static int init_screen(void)
                             MARGIN_LEFT)) == NULL) ||
             ((footnote = screen_subwin(FOOTNOTE_HIGH, SCREEN_WIDTH,
                             LINES - FOOTNOTE_HIGH - 1, MARGIN_LEFT)) == NULL)) {
-            delwin(middle);     /* ... ignore NULL. */
+            delwin(middle);     /* Ignore NULL. */
             delwin(footnote);
             return -1;
         }
@@ -211,7 +211,7 @@ static int main_menu_driver(const char *menu_title, config_t choices[])
             clear();
             mvwprintw(main_screen, 0, 0, "%s", "Terminal is too small ...");
 
-            getch();            /* ... ignore the input. */
+            getch();            /* Ignore the input. */
         }
     }
 
@@ -339,7 +339,7 @@ int start_gui(int nr_pages)
 
     while (TRUE) {
 
-        /* ... get the 'config' array for GUI from 'stack' top. */
+        /* Get the 'config' array for GUI from 'stack' top. */
         if ((config = get_config(stack[index])) == NULL) {
             ret = -2;
             break;
@@ -368,13 +368,13 @@ int start_gui(int nr_pages)
                 }
 
                 else if ((d == 'S') || (d == 's')) {
-                    goto out;   /* ... return SUCCESS. */
+                    goto out;   /* Return SUCCESS. */
 
                 } else if ((d == 'C') || (d == 'c') || (d == 27))
                     break;
 
                 else if (d == KEY_RESIZE)
-                    break;      /* ... terminal resized. */
+                    break;      /* Terminal resized. */
             }
 
             break;
@@ -392,11 +392,11 @@ int start_gui(int nr_pages)
 
         case SPECIAL_KEY_F1:
             open_file(__MAIN_MENU_HIGH, SCREEN_WIDTH,
-                /* ... 'README.md' is inside the '_IN_FOLDER' folder. */
+                /* 'README.md' is inside the '_IN_FOLDER' folder. */
                 TITLE_HIGH, MARGIN_LEFT, "README.md");
             break;
 
-        default:               /* Process 'SPECIAL_KEY_RT' ... */
+        default:               /* Process 'SPECIAL_KEY_RT'. */
 
             if (cur_config.t == CONF_MENU)
                 stack[++index] = cur_config.menu;

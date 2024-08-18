@@ -29,6 +29,7 @@ static item_t *hash_get_item(string_t symbol)
 {
     ENTRY entry = { symbol, NULL };
     ENTRY *found_entry = hsearch(entry, FIND);
+
     if (found_entry != NULL)
         return (item_t *) (found_entry->data);
 
@@ -50,6 +51,7 @@ static int hash_add_item(item_t *item, string_t symbol)
     }
 
     LIST_INSERT_TAIL(&item->sym_node, &symtable);
+
     return SUCCESS;
 }
 
@@ -71,6 +73,7 @@ int push_menu(token_t token, expr_t expr)
     LIST_INSERT_TAIL(&menu->sibling, &curr_menu->childs);
 
     curr_menu = menu;
+
     return SUCCESS;
 }
 
@@ -78,6 +81,7 @@ int pop_menu(void)
 {
     /* 'curr_menu' is tail of current menu. */
     curr_menu = container_of(curr_menu->sibling.next, menu_t, childs);
+
     return SUCCESS;
 }
 
@@ -96,7 +100,8 @@ struct token_list *next_token(struct token_list *token1,
         if (flags == TK_LIST_EF_NULL) {
 
             /* It is an entry in the list for 'select' keyword or a standard
-             * (i.e. it is not default) option for 'choice' keyword. */
+             * (i.e. it is not default) option for 'choice' keyword.
+             */
 
             et->token = va_arg(va, token_t);
 
@@ -107,7 +112,6 @@ struct token_list *next_token(struct token_list *token1,
             /* TODO. Check if there is any conditional token in the list. */
 
             /* It is the default option for 'choice' keyword. */
-
             et->token = va_arg(va, token_t);
         }
 
@@ -116,8 +120,7 @@ struct token_list *next_token(struct token_list *token1,
             et->condition = va_arg(va, expr_t);
         }
 
-        /* 'token1' is the tail of token list from last call. */
-
+        /* It is the tail of token list from last call. */
         token1 = token_list_add(&et->node, token1);
 
     } else {
@@ -479,7 +482,7 @@ int __populate_config_file(const char *filename, unsigned long flags)
                     break;
 
                 default:
-                    /* ... only when 'flag' is -1. */
+                    /* Only when 'flag' is -1. */
                     fprintf(fp, "undefined.\n");
 
                 }
@@ -487,7 +490,8 @@ int __populate_config_file(const char *filename, unsigned long flags)
                 /* There may be multiple entries in the token list with the requested
                  * flags. We continue processing all tokes. For instance, multiple
                  * option in a 'choice' may have 'TK_LIST_EF_DEFAULT' set while
-                 * being conditional, i.e. 'TK_LIST_EF_CONDITIONAL' set. */
+                 * being conditional, i.e. 'TK_LIST_EF_CONDITIONAL' set.
+                 */
             }
         }
     }
@@ -516,7 +520,8 @@ static void update_select_token_list(struct token_list *head, bool n)
                     /* If 'TK_LIST_EF_DEFAULT' is set, then we have not
                      * processed this item in 'read_config_file' yet. We do
                      * not update the state to 'true' even if it is 'false'.
-                     * 'read_config_file' should handle it. **/
+                     * 'read_config_file' should handle it.
+                     */
 
                     if (e->flags & TK_LIST_EF_DEFAULT ||
                         e->token.TK_BOOL == true)
@@ -563,7 +568,7 @@ void toggle_config(item_t *item, ...)
     va_start(va, item);
     et = item_get_config_et(item);
 
-    /* ... sure 'TK_LIST_EF_CONFIG' is set. */
+    /* Sure 'TK_LIST_EF_CONFIG' is set. */
     if (et->token.ttype == TT_BOOL) {
         et->token.TK_BOOL = !et->token.TK_BOOL;
 
@@ -613,7 +618,7 @@ int read_config_file(const char *filename)
         item_token_list_for_each_entry(et, item) {
 
             if (et->flags & TK_LIST_EF_CONFIG) {
-                /* ... 'TK_LIST_EF_DEFAULT' is always set. */
+                /* 'TK_LIST_EF_DEFAULT' is always set. */
 
                 if (et->token.ttype == TT_BOOL) {
                     int tmp = strncmp(value, "true", 4);
@@ -627,7 +632,8 @@ int read_config_file(const char *filename)
                          * We only change 'TK_BOOL' to false if 'refcount' is zero.
                          * As 'TK_LIST_EF_DEFAULT' is set, i.e. it has not been
                          * processed before in this function, changing to 'false'
-                         * does not case any changes to other configuration items. **/
+                         * does not case any changes to other configuration items.
+                         */
 
                         if (tmp != 0) {
                             if (item->refcount > 0)
@@ -643,7 +649,8 @@ int read_config_file(const char *filename)
                                 /* We should leave this item as 'false', Here.
                                  * But as 'refcount' is already greater than zero,
                                  * this item has been selected before, so we set
-                                 * it to 'true' instead. **/
+                                 * it to 'true' instead.
+                                 */
 
                                 et->token.TK_BOOL = true;
                             }
@@ -663,7 +670,7 @@ int read_config_file(const char *filename)
                 }
 
                 et->flags &= ~TK_LIST_EF_DEFAULT;
-                break;          /* ... try next line. */
+                break;          /* Try next line. */
             } else
                 __toggle_choice(et, value);
         }

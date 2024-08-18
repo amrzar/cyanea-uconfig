@@ -119,7 +119,7 @@ static inline void toggle_choice(item_t *item, string_t n)
     struct extended_token *et;
 
     item_token_list_for_each_entry(et, item) {
-        /* ... remove 'TK_LIST_EF_SELECTED', first. */
+        /* Remove 'TK_LIST_EF_SELECTED', first. */
         et->flags &= ~TK_LIST_EF_SELECTED;
         __toggle_choice(et, n);
     }
